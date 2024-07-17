@@ -31,4 +31,8 @@
     <ItemGroup>
       <ProjectReference Include="..\CatMessenger.Core\CatMessenger.Core.csproj" />
     </ItemGroup>
+
+    <PropertyGroup>
+      <PublishSingleFile>true</PublishSingleFile>
+    </PropertyGroup>
 </Project>
