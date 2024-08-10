@@ -291,6 +291,10 @@ public class UpdateMessageHelper
             var sender = GetFromUser(message.From);
             msg.Sender = sender;
         }
+        else
+        {
+            msg.Sender = new EmptyMessage();
+        }
 
         if (edited)
         {
