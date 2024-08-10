@@ -51,7 +51,7 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
         message.Client = config.GetName();
         message.Time ??= DateTime.Now;
 
-        var json = JsonConvert.SerializeObject(message);
+        var json = JsonConvert.SerializeObject(message, Constants.JsonSerializerSettings);
         await InternalPublish(json, 0);
     }
 
