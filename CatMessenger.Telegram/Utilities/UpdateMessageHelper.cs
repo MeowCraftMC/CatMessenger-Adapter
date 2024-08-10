@@ -71,8 +71,7 @@ public class UpdateMessageHelper
         var from = new TextMessage();
         switch (chat.Type)
         {
-            case ChatType.Channel:
-            case ChatType.Supergroup or ChatType.Group:
+            case ChatType.Channel or ChatType.Supergroup or ChatType.Group:
             {
                 from.Text = chat.Title!;
                 from.Bold = true; 

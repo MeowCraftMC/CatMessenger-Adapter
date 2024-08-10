@@ -4,8 +4,8 @@ namespace CatMessenger.Core.Message.MessageType;
 
 public class TextMessage : AbstractMessage
 {
-    public string Text { get; set; }
-
+    public string Text { get; set; } = string.Empty;
+    
     public override string GetType()
     {
         return "text";
@@ -14,7 +14,7 @@ public class TextMessage : AbstractMessage
     public override JObject WriteData()
     {
         var jObject = new JObject();
-        jObject["text"] = Text;
+        jObject["text"] = Text ?? string.Empty;
         return jObject;
     }
 

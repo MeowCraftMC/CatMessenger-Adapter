@@ -4,7 +4,7 @@ namespace CatMessenger.Core.Message.MessageType;
 
 public class TranslatableMessage : AbstractMessage
 {
-    public string Key { get; set; }
+    public string Key { get; set; } = string.Empty;
     public List<string> Args { get; set; } = new();
 
     public override string GetType()
@@ -15,7 +15,7 @@ public class TranslatableMessage : AbstractMessage
     public override JObject WriteData()
     {
         var jObject = new JObject();
-        jObject["key"] = Key;
+        jObject["key"] = Key ?? string.Empty;
 
         if (Args.Count != 0)
         {
