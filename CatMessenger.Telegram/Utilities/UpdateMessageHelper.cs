@@ -232,39 +232,44 @@ public class UpdateMessageHelper
 
     private static AbstractMessage GetStyledMessage(string text, MessageEntity[] entities)
     {
-        var message = new EmptyMessage();
-
-        if (entities.Length == 0)
+        return new TextMessage
         {
-            return new TextMessage
-            {
-                Text = text
-            };
-        }
-
-        var textCursor = 0;
-        foreach (var entity in entities)
-        {
-            if (entity.Offset > textCursor)
-            {
-                message.Extras.Add(new TextMessage
-                {
-                    Text = text[textCursor..entity.Offset]
-                });
-            }
-
-            if (entity.Offset <= textCursor)
-            {
-                continue;
-                // Todo: Not implemented.
-                // qyl27: For combined entities.
-            }
-
-            message.Extras.Add(GetStyledText(entity, text[entity.Offset..(entity.Offset + entity.Length)]));
-            textCursor = entity.Offset;
-        }
-
-        return message;
+            Text = text
+        };
+        
+        // var message = new EmptyMessage();
+        //
+        // if (entities.Length == 0)
+        // {
+        //     return new TextMessage
+        //     {
+        //         Text = text
+        //     };
+        // }
+        //
+        // var textCursor = 0;
+        // foreach (var entity in entities)
+        // {
+        //     if (entity.Offset > textCursor)
+        //     {
+        //         message.Extras.Add(new TextMessage
+        //         {
+        //             Text = text[textCursor..entity.Offset]
+        //         });
+        //     }
+        //
+        //     if (entity.Offset <= textCursor)
+        //     {
+        //         continue;
+        //         // Todo: Not implemented.
+        //         // qyl27: For combined entities.
+        //     }
+        //
+        //     message.Extras.Add(GetStyledText(entity, text[entity.Offset..(entity.Offset + entity.Length)]));
+        //     textCursor = entity.Offset;
+        // }
+        //
+        // return message;
     }
 
     private static AbstractMessage GetSticker(Sticker sticker)
