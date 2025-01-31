@@ -36,15 +36,15 @@ public class UpdateHandler(
             return;
         }
 
-        if (update.Type == UpdateType.Message
-            && update.Message!.Type == MessageType.Text
-            && update.Message.Text!.StartsWith('/'))
-        {
-            var command = update.Message.Text[1..].Split(" ");
-            logger.LogInformation("Telegram command: {Command}", update.Message.Text);
-            await OnCommand(update.Message, command[0], command[1..]);
-            return;
-        }
+        // if (update.Type == UpdateType.Message
+        //     && update.Message!.Type == MessageType.Text
+        //     && update.Message.Text!.StartsWith('/'))
+        // {
+        //     var command = update.Message.Text[1..].Split(" ");
+        //     logger.LogInformation("Telegram command: {Command}", update.Message.Text);
+        //     await OnCommand(update.Message, command[0], command[1..]);
+        //     return;
+        // }
 
         var message = UpdateMessageHelper.FromUpdate(update);
 

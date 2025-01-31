@@ -11,7 +11,6 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
 {
     public static string ExchangeName { get; } = "messages";
     public static string ExchangeType { get; } = "fanout";
-    public static string RoutingKey { get; } = "";
 
     public delegate void Handle(ConnectorMessage message);
 
@@ -29,7 +28,7 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
 
         await Channel.ExchangeDeclareAsync(ExchangeName, ExchangeType, true, false);
         await Channel.QueueDeclareAsync(queue: QueueName, durable: true, exclusive: false, autoDelete: true);
-        await Channel.QueueBindAsync(QueueName, ExchangeName, RoutingKey);
+        await Channel.QueueBindAsync(QueueName, ExchangeName, string.Empty);
 
         await Channel.BasicConsumeAsync(QueueName, false, new MessageConsumer(config, logger, this));
     }
@@ -76,7 +75,7 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
                 Connect().Wait();
             }
 
-            await Channel!.BasicPublishAsync(ExchangeName, RoutingKey, Encoding.UTF8.GetBytes(json));
+            await Channel!.BasicPublishAsync(ExchangeName, string.Empty, Encoding.UTF8.GetBytes(json));
         }
         catch (Exception ex)
         {

@@ -8,6 +8,7 @@ namespace CatMessenger.Telegram.Utilities;
 
 public class UpdateMessageHelper
 {
+    // Todo: ignore outdated messages.
     public static ConnectorMessage FromUpdate(Update update)
     {
         return update.Type switch
