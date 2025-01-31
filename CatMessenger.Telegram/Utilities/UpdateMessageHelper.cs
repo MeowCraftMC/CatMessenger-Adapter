@@ -1,7 +1,4 @@
-﻿using CatMessenger.Core.Connector;
-using CatMessenger.Core.Message;
-using CatMessenger.Core.Message.MessageType;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace CatMessenger.Telegram.Utilities;

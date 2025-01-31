@@ -50,33 +50,28 @@ public class ConfigProvider(IConfiguration config) : IConfigProvider
         return config.GetValue<string>("Name")!;
     }
 
-    public string GetConnectorHost()
+    public string GetRabbitMqHost()
     {
         return config.GetValue<string>("Connector:Host") ?? "";
     }
 
-    public int GetConnectorPort()
+    public int GetRabbitMqPort()
     {
         return config.GetValue<int>("Connector:Port");
     }
 
-    public string GetConnectorVirtualHost()
+    public string GetRabbitMqVirtualHost()
     {
         return config.GetValue<string>("Connector:VirtualHost") ?? "";
     }
 
-    public string GetConnectorUsername()
+    public string GetRabbitMqUsername()
     {
         return config.GetValue<string>("Connector:Username") ?? "";
     }
 
-    public string GetConnectorPassword()
+    public string GetRabbitMqPassword()
     {
         return config.GetValue<string>("Connector:Password") ?? "";
-    }
-
-    public int GetConnectorMaxRetry()
-    {
-        return config.GetValue<int>("Connector:MaxRetry");
     }
 }

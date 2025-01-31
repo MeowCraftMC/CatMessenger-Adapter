@@ -1,6 +1,6 @@
 ﻿using System.Net;
+using CatMessenger.Core;
 using CatMessenger.Core.Config;
-using CatMessenger.Core.Connector;
 using CatMessenger.Telegram.Bot;
 using CatMessenger.Telegram.Config;
 using Microsoft.Extensions.Configuration;
@@ -54,7 +54,7 @@ builder.Services.AddHttpClient("TelegramBotClient")
         return new TelegramBotClient(options, client);
     });
 
-builder.Services.AddSingleton<RabbitMqConnector>();
+builder.Services.AddSingleton<Messenger>();
 
 builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<ReceiverService>();

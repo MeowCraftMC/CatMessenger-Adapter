@@ -1,11 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CatMessenger.Core;
 
-public class Constants
+public static class Constants
 {
-    public static readonly JsonSerializerSettings JsonSerializerSettings = new()
+    public static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
-        NullValueHandling = NullValueHandling.Ignore
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 }

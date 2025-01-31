@@ -1,5 +1,4 @@
-﻿using CatMessenger.Core.Connector;
-using CatMessenger.Core.Message.MessageType;
+﻿using CatMessenger.Core;
 using CatMessenger.Telegram.Bot.Bases;
 using CatMessenger.Telegram.Config;
 using CatMessenger.Telegram.Utilities;
@@ -15,7 +14,7 @@ public class PollingService(
     ILogger<PollingService> logger,
     ITelegramBotClient bot,
     ConfigProvider config,
-    RabbitMqConnector connector)
+    Messenger messenger)
     : PollingServiceBase<ReceiverService>(serviceProvider, logger)
 {
     private int _tries = 0;
@@ -42,85 +41,25 @@ public class PollingService(
 
     private async Task InnerStartAsync(CancellationToken cancellationToken)
     {
-        await connector.Connect();
+        await messenger.ConnectAsync();
 
-        connector.MessageQueue!.OnMessage += async message =>
+        messenger.Message.OnMessage += async message =>
         {
-            await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
-                parseMode: ParseMode.Html, cancellationToken: cancellationToken);
-        };
-
-        connector.CommandQueue!.OnCommand += async (command, props) =>
-        {
-            if (command.Callback != config.GetId())
-            {
-                return;
-            }
-
-            switch (command.Command)
-            {
-                case ConnectorCommand.EnumCommand.ResponseOnline:
-                    if (int.Parse(command.Arguments[0]) > 0)
-                    {
-                        await bot.SendTextMessageAsync(config.GetTelegramChatId(),
-                            $"<b>服务器 {command.Sender} 有 {command.Arguments[0]} 位玩家在线：</b>\n{string.Join("\n", command.Arguments[1..])}",
-                            replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html,
-                            cancellationToken: cancellationToken);
-                        return;
-                    }
-
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(),
-                        $"<b>服务器 {command.Sender} 目前没人在线</b> :(",
-                        replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html,
-                        cancellationToken: cancellationToken);
-                    return;
-
-                case ConnectorCommand.EnumCommand.ResponseWorldTime:
-                    var time = int.Parse(command.Arguments[0]);
-                    if (time < 0)
-                    {
-                        await bot.SendTextMessageAsync(config.GetTelegramChatId(),
-                            $"<b>服务器 {command.Sender} 认为查询条件错误。</b>",
-                            replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
-                        return;
-                    }
-
-                    var timeStr = time switch
-                    {
-                        >= 0 and <= 12000 => "白天☀️",
-                        > 12000 and <= 24000 => "夜晚🌙",
-                        _ => "奇奇怪怪的时间"
-                    };
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(),
-                        $"<b>服务器 {command.Sender} 的主世界现在是：</b>{timeStr}",
-                        replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
-                    return;
-                case ConnectorCommand.EnumCommand.Error:
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(), "查询发生错误！",
-                        replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
-                    return;
-                case ConnectorCommand.EnumCommand.Online:
-                case ConnectorCommand.EnumCommand.Offline:
-                case ConnectorCommand.EnumCommand.QueryOnline:
-                case ConnectorCommand.EnumCommand.QueryWorldTime:
-                case ConnectorCommand.EnumCommand.RunCommand:
-                case ConnectorCommand.EnumCommand.CommandResult:
-                default:
-                    return;
-            }
+            // await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
+            //     parseMode: ParseMode.Html, cancellationToken: cancellationToken);
         };
 
         await bot.SetMyCommandsAsync([
-            new BotCommand
-            {
-                Command = "online",
-                Description = "查询服务器在线人数。/online <服务器名>"
-            },
-            new BotCommand
-            {
-                Command = "time",
-                Description = "查询服务器世界时间。/time <服务器名> [世界名] [查询类型]"
-            },
+            // new BotCommand
+            // {
+            //     Command = "online",
+            //     Description = "查询服务器在线人数。/online <服务器名>"
+            // },
+            // new BotCommand
+            // {
+            //     Command = "time",
+            //     Description = "查询服务器世界时间。/time <服务器名> [世界名] [查询类型]"
+            // },
             new BotCommand
             {
                 Command = "meow",
@@ -132,27 +71,27 @@ public class PollingService(
 
         await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！",
             cancellationToken: cancellationToken);
-        await connector.Publish(new ConnectorMessage
-        {
-            Content = new TextMessage
-            {
-                Text = "适配器启动了！"
-            }
-        });
+        // await catMessenger.Message.PublishAsync(new ConnectorMessage
+        // {
+        //     Content = new TextMessage
+        //     {
+        //         Text = "适配器启动了！"
+        //     }
+        // });
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        await connector.Disconnect();
+        // await catMessenger.Message.PublishAsync(new ConnectorMessage
+        // {
+        //     Content = new TextMessage
+        //     {
+        //         Text = "适配器关闭了！"
+        //     }
+        // });
         await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！",
             cancellationToken: cancellationToken);
-        await connector.Publish(new ConnectorMessage
-        {
-            Content = new TextMessage
-            {
-                Text = "适配器关闭了！"
-            }
-        });
+        await messenger.DisconnectAsync();
         await base.StopAsync(cancellationToken);
     }
 }

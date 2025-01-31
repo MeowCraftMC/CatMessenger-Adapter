@@ -6,10 +6,9 @@ public interface IConfigProvider
     public string GetId();
     public string GetName();
 
-    public string GetConnectorHost();
-    public int GetConnectorPort();
-    public string GetConnectorVirtualHost();
-    public string GetConnectorUsername();
-    public string GetConnectorPassword();
-    public int GetConnectorMaxRetry();
+    public string GetRabbitMqHost();
+    public int GetRabbitMqPort();
+    public string GetRabbitMqVirtualHost();
+    public string GetRabbitMqUsername();
+    public string GetRabbitMqPassword();
 }
