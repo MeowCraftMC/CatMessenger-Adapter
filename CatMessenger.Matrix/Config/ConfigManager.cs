@@ -20,6 +20,11 @@ public class ConfigManager(IConfiguration config) : IConfigProvider
         return HasDevEnvironmentVariable() || config.GetValue<bool>("Debug");
     }
 
+    public string GetId()
+    {
+        return config.GetValue<string>("Id") ?? "";
+    }
+
     public string GetName()
     {
         return config.GetValue<string>("Name") ?? "";
@@ -54,7 +59,7 @@ public class ConfigManager(IConfiguration config) : IConfigProvider
     {
         return config.GetValue<int>("Connector:MaxRetry");
     }
-    
+
     public string GetMatrixUri()
     {
         return config.GetValue<string>("Matrix:Uri") ?? "";

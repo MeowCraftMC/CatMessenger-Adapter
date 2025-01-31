@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="NLog.Extensions.Logging" Version="5.3.11" />
-      <PackageReference Include="RabbitMQ.Client" Version="7.0.0-alpha.6" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="NLog.Extensions.Logging" Version="5.3.11"/>
+        <PackageReference Include="RabbitMQ.Client" Version="7.0.0-alpha.6"/>
     </ItemGroup>
 
 </Project>

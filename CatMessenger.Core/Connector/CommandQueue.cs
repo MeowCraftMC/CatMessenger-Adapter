@@ -6,23 +6,30 @@ using RabbitMQ.Client;
 
 namespace CatMessenger.Core.Connector;
 
-public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> logger, IConnection connection) : IDisposable
+public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> logger, IConnection connection)
+    : IDisposable
 {
+    public static string ExchangeName { get; } = "commands";
+    public static string ExchangeType { get; } = "topic";
+
     public delegate void Handle(ConnectorCommand command, ReadOnlyBasicProperties props);
 
-    public event Handle OnCommand;
+    public event Handle? OnCommand;
 
     private IChannel? Channel { get; set; }
 
-    private string QueueName { get; set; } = $"{config.GetName()}_command";
-    
+    private string QueueName { get; set; } = $"command.{config.GetId()}";
+
     public bool IsClosing { get; private set; } = false;
-    
+
     public async Task Connect()
     {
         Channel = await connection.CreateChannelAsync();
-        
-        await Channel.QueueDeclareAsync(queue: QueueName, durable: false, exclusive: true, autoDelete: true);
+
+        await Channel.ExchangeDeclareAsync(ExchangeName, ExchangeType, true, false);
+        await Channel.QueueDeclareAsync(queue: QueueName, durable: true, exclusive: false, autoDelete: true);
+        await Channel.QueueBindAsync(QueueName, ExchangeName, routingKey: config.GetId());
+
         await Channel.BasicConsumeAsync(QueueName, false, new CommandConsumer(config, logger, this));
     }
 
@@ -38,13 +45,13 @@ public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
             Channel.Dispose();
         }
     }
-    
+
     public async Task Publish(ConnectorCommand message)
     {
         var json = JsonConvert.SerializeObject(message, Constants.JsonSerializerSettings);
-        await InternalPublish(json, $"{message.Callback}_command", 0);
+        await InternalPublish(json, message.Callback, 0);
     }
-    
+
     public async Task Reply(ReadOnlyBasicProperties props, params string[] message)
     {
         var json = JsonConvert.SerializeObject(message, Constants.JsonSerializerSettings);
@@ -71,14 +78,14 @@ public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
                 Connect().Wait();
             }
 
-            await Channel!.BasicPublishAsync(string.Empty, $"{client}_command", Encoding.UTF8.GetBytes(json));
+            await Channel!.BasicPublishAsync(ExchangeName, client, Encoding.UTF8.GetBytes(json));
         }
         catch (Exception ex)
         {
             await InternalPublish(json, client, retry + 1);
         }
     }
-    
+
     private async Task InternalReply(string json, ReadOnlyBasicProperties props, int retry)
     {
         try
@@ -109,10 +116,11 @@ public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
             await InternalReply(json, props, retry + 1);
         }
     }
-    
-    private class CommandConsumer(IConfigProvider config, ILogger<RabbitMqConnector> logger, CommandQueue queue) : DefaultBasicConsumer
+
+    private class CommandConsumer(IConfigProvider config, ILogger<RabbitMqConnector> logger, CommandQueue queue)
+        : DefaultBasicConsumer
     {
-        public override async Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered, 
+        public override async Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered,
             string exchange, string routingKey, ReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body)
         {
             if (queue.IsClosing)
@@ -122,24 +130,25 @@ public class CommandQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
             }
 
             var json = Encoding.UTF8.GetString(body.ToArray());
-            
+
             var message = JsonConvert.DeserializeObject<ConnectorCommand>(json);
+
+            if (message == null)
+            {
+                await Channel.BasicAckAsync(deliveryTag, false);
+                return;
+            }
 
             try
             {
-                if (message != null)
-                {
-                    queue.OnCommand.Invoke(message, properties);
-                }
+                queue.OnCommand?.Invoke(message, properties);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to process: {Json}", json);
             }
-            finally
-            {
-                await Channel.BasicAckAsync(deliveryTag, false);
-            }
+
+            await Channel.BasicAckAsync(deliveryTag, false);
         }
     }
 }

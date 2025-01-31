@@ -14,12 +14,12 @@ public class ConfigProvider(IConfiguration config) : IConfigProvider
     {
         return GetDevEnvironmentVariable().Equals("Development", StringComparison.OrdinalIgnoreCase);
     }
-    
+
     public string GetTelegramToken()
     {
         return config.GetValue<string>("Telegram:Token") ?? "";
     }
-    
+
     public bool IsTelegramProxyEnabled()
     {
         return config.GetValue<bool>("Telegram:Proxy:Enabled");
@@ -29,7 +29,7 @@ public class ConfigProvider(IConfiguration config) : IConfigProvider
     {
         return config.GetValue<string>("Telegram:Proxy:Url") ?? "";
     }
-    
+
     public long GetTelegramChatId()
     {
         return long.Parse(config.GetValue<string>("Telegram:ChatId")!);
@@ -40,11 +40,16 @@ public class ConfigProvider(IConfiguration config) : IConfigProvider
         return HasDevEnvironmentVariable() || config.GetValue<bool>("Debug");
     }
 
+    public string GetId()
+    {
+        return config.GetValue<string>("Id") ?? "";
+    }
+
     public string GetName()
     {
         return config.GetValue<string>("Name")!;
     }
-    
+
     public string GetConnectorHost()
     {
         return config.GetValue<string>("Connector:Host") ?? "";

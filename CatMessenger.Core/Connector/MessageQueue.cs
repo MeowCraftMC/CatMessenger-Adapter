@@ -6,31 +6,32 @@ using RabbitMQ.Client;
 
 namespace CatMessenger.Core.Connector;
 
-public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> logger, IConnection connection) : IDisposable
+public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> logger, IConnection connection)
+    : IDisposable
 {
-    public static string ExchangeName { get; } = "catmessenger";
+    public static string ExchangeName { get; } = "messages";
     public static string ExchangeType { get; } = "fanout";
     public static string RoutingKey { get; } = "";
-    
+
     public delegate void Handle(ConnectorMessage message);
 
-    public event Handle OnMessage;
+    public event Handle? OnMessage;
 
     private IChannel? Channel { get; set; }
-    
-    private string QueueName { get; set; }
-    
+
+    private string QueueName { get; set; } = $"message.{config.GetId()}";
+
     public bool IsClosing { get; private set; } = false;
-    
+
     public async Task Connect()
     {
         Channel = await connection.CreateChannelAsync();
-        
-        await Channel.ExchangeDeclareAsync(ExchangeName, ExchangeType, true, false, null);
-        var queue = await Channel.QueueDeclareAsync(); QueueName = queue.QueueName;
+
+        await Channel.ExchangeDeclareAsync(ExchangeName, ExchangeType, true, false);
+        await Channel.QueueDeclareAsync(queue: QueueName, durable: true, exclusive: false, autoDelete: true);
         await Channel.QueueBindAsync(QueueName, ExchangeName, RoutingKey);
 
-        await Channel.BasicConsumeAsync(QueueName, true, new MessageConsumer(config, logger, this));
+        await Channel.BasicConsumeAsync(QueueName, false, new MessageConsumer(config, logger, this));
     }
 
     public async Task Disconnect()
@@ -45,10 +46,10 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
             Channel.Dispose();
         }
     }
-    
+
     public async Task Publish(ConnectorMessage message)
     {
-        message.Client = config.GetName();
+        message.Client = config.GetId();
         message.Time ??= DateTime.Now;
 
         var json = JsonConvert.SerializeObject(message, Constants.JsonSerializerSettings);
@@ -82,41 +83,38 @@ public class MessageQueue(IConfigProvider config, ILogger<RabbitMqConnector> log
             await InternalPublish(json, retry + 1);
         }
     }
-    
-    private class MessageConsumer(IConfigProvider config, ILogger<RabbitMqConnector> logger, MessageQueue queue) : DefaultBasicConsumer
+
+    private class MessageConsumer(IConfigProvider config, ILogger<RabbitMqConnector> logger, MessageQueue queue)
+        : DefaultBasicConsumer
     {
-        public override Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered, 
+        public override async Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered,
             string exchange, string routingKey, ReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body)
         {
             if (queue.IsClosing)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             var json = Encoding.UTF8.GetString(body.ToArray());
-            
+
             var message = JsonConvert.DeserializeObject<ConnectorMessage>(json);
 
-            if (message == null)
+            if (message == null || message.Client == config.GetId())
             {
-                return Task.CompletedTask;
-            }
-            
-            if (message.Client == config.GetName())
-            {
-                return Task.CompletedTask;
+                await Channel.BasicAckAsync(deliveryTag, false);
+                return;
             }
 
             try
             {
-                queue.OnMessage.Invoke(message);
+                queue.OnMessage?.Invoke(message);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to process: {Json}", json);
             }
-            
-            return Task.CompletedTask;
+
+            await Channel.BasicAckAsync(deliveryTag, false);
         }
     }
 }

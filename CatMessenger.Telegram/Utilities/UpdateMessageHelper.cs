@@ -37,7 +37,7 @@ public class UpdateMessageHelper
         {
             return new EmptyMessage();
         }
-        
+
         var from = new TextMessage();
         if (string.IsNullOrWhiteSpace(user.LastName))
         {
@@ -47,7 +47,7 @@ public class UpdateMessageHelper
         {
             from.Text = $"{user.FirstName} {user.LastName}";
         }
-        
+
         from.Color = MessageColor.Aqua;
 
         if (!string.IsNullOrWhiteSpace(user.Username))
@@ -57,24 +57,24 @@ public class UpdateMessageHelper
                 Text = $"@{user.Username}"
             };
         }
-        
+
         return from;
     }
-    
+
     private static AbstractMessage GetFromChat(Chat? chat)
     {
         if (chat is null)
         {
             return new EmptyMessage();
         }
-        
+
         var from = new TextMessage();
         switch (chat.Type)
         {
             case ChatType.Channel or ChatType.Supergroup or ChatType.Group:
             {
                 from.Text = chat.Title!;
-                from.Bold = true; 
+                from.Bold = true;
                 break;
             }
             case ChatType.Private or ChatType.Sender:
@@ -84,13 +84,14 @@ public class UpdateMessageHelper
                 {
                     text += $"{chat.FirstName}";
                 }
-                
+
                 if (!string.IsNullOrWhiteSpace(chat.LastName))
                 {
                     if (!string.IsNullOrWhiteSpace(text))
                     {
                         text += " ";
                     }
+
                     text += $"{chat.LastName}";
                 }
 
@@ -104,29 +105,30 @@ public class UpdateMessageHelper
                         Text = $"@{chat.Username}"
                     };
                 }
+
                 break;
             }
         }
-        
+
         return from;
     }
-    
+
     private static AbstractMessage GetText(string originText)
     {
         var message = new EmptyMessage();
-    
+
         if (string.IsNullOrWhiteSpace(originText))
         {
             return message;
         }
-        
+
         var text = originText.Replace('\n', ' ');
-    
+
         message.Extras.Add(new TextMessage
         {
             Text = text
         });
-    
+
         return message;
     }
 
@@ -136,7 +138,7 @@ public class UpdateMessageHelper
         {
             Text = text
         };
-        
+
         switch (entity.Type)
         {
             case MessageEntityType.Mention:
@@ -162,12 +164,12 @@ public class UpdateMessageHelper
                 {
                     message.Hover = hover;
                 }
+
                 break;
             }
             case MessageEntityType.Url:
             case MessageEntityType.TextLink:
             {
-                
                 message.Color = MessageColor.Blue;
                 message.Underline = true;
 
@@ -175,7 +177,7 @@ public class UpdateMessageHelper
                 {
                     Text = entity.Url!
                 };
-                
+
                 if (disableHover)
                 {
                     message.Extras.Add(new TextMessage
@@ -192,6 +194,7 @@ public class UpdateMessageHelper
                 {
                     message.Hover = hover;
                 }
+
                 break;
             }
             case MessageEntityType.PhoneNumber:
@@ -226,7 +229,7 @@ public class UpdateMessageHelper
             default:
                 break;
         }
-        
+
         return message;
     }
 
@@ -236,7 +239,7 @@ public class UpdateMessageHelper
         {
             Text = text
         };
-        
+
         // var message = new EmptyMessage();
         //
         // if (entities.Length == 0)
@@ -284,7 +287,7 @@ public class UpdateMessageHelper
             }
         };
     }
-    
+
     private static ConnectorMessage FromMessage(Message message, bool edited = false)
     {
         var msg = new ConnectorMessage();
@@ -309,14 +312,14 @@ public class UpdateMessageHelper
             };
             chatMsg.Extras.Add(edit);
         }
-        
+
         if (message.ReplyToMessage != null)
         {
             var reply = message.ReplyToMessage;
 
-            var hover = GetStyledMessage(reply.Caption ?? reply.Text ?? string.Empty, 
+            var hover = GetStyledMessage(reply.Caption ?? reply.Text ?? string.Empty,
                 reply.CaptionEntities ?? reply.Entities ?? []);
-            
+
             var replyMsg = new TextMessage
             {
                 Text = "[回复：",
@@ -328,14 +331,14 @@ public class UpdateMessageHelper
             from.Color = MessageColor.Aqua;
             from.Hover = hover;
             replyMsg.Extras.Add(from);
-            
-            replyMsg.Extras.Add(new TextMessage 
+
+            replyMsg.Extras.Add(new TextMessage
             {
                 Text = "] ",
                 Color = MessageColor.LightPurple,
                 Hover = hover
             });
-            
+
             chatMsg.Extras.Add(replyMsg);
         }
 
@@ -353,14 +356,14 @@ public class UpdateMessageHelper
             {
                 Text = "] "
             });
-            
+
             chatMsg.Extras.Add(forwardMsg);
         }
 
         if (message.ForwardFromChat != null)
         {
             var forwardFrom = message.ForwardFromChat;
-            
+
             var forwardMsg = new TextMessage
             {
                 Text = "[转发自 ",
@@ -371,7 +374,7 @@ public class UpdateMessageHelper
             {
                 Text = "] "
             });
-            
+
             chatMsg.Extras.Add(forwardMsg);
         }
 
@@ -397,7 +400,7 @@ public class UpdateMessageHelper
                 Color = MessageColor.Blue
             });
         }
-        
+
         if (message.Voice != null)
         {
             chatMsg.Extras.Add(new TextMessage
@@ -406,7 +409,7 @@ public class UpdateMessageHelper
                 Color = MessageColor.Blue
             });
         }
-        
+
         if (message.Audio != null)
         {
             chatMsg.Extras.Add(new TextMessage
@@ -415,7 +418,7 @@ public class UpdateMessageHelper
                 Color = MessageColor.Blue
             });
         }
-        
+
         if (message.Video != null)
         {
             chatMsg.Extras.Add(new TextMessage
@@ -424,14 +427,14 @@ public class UpdateMessageHelper
                 Color = MessageColor.Blue
             });
         }
-        
+
         chatMsg.Extras.Add(GetStyledMessage(message.Caption ?? message.Text ?? string.Empty,
             message.CaptionEntities ?? message.Entities ?? []));
-        
+
         msg.Content = chatMsg;
         return msg;
     }
-    
+
     private static ConnectorMessage FromUnsupported(Update update)
     {
         return new ConnectorMessage
@@ -443,7 +446,7 @@ public class UpdateMessageHelper
             }
         };
     }
-    
+
     private static ConnectorMessage FromUnknown(Update update)
     {
         return new ConnectorMessage

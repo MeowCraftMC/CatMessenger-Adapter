@@ -17,7 +17,7 @@ public abstract class ReceiverServiceBase<TUpdateHandler>(
 
         var me = await bot.GetMeAsync(stoppingToken);
         logger.LogInformation("Start receiving updates for @{Name}", me.Username ?? "Telegram Bot");
-        
+
         await bot.ReceiveAsync(
             updateHandler: updateHandler,
             receiverOptions: receiverOptions,

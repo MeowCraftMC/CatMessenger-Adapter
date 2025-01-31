@@ -16,7 +16,7 @@ public class MessageHelper
                     〔{message.Client}〕{ToHtml(message.Content)}
                     """;
         }
-        
+
         return $"""
                 〔{message.Client}〕<b>{ToHtml(message.Sender)}</b>：
                 {ToHtml(message.Content)}
@@ -36,16 +36,20 @@ public class MessageHelper
             var text = HtmlEncoder.Default.Encode(textMessage.Text);
             result.Append(text);
         }
+
         if (message is TranslatableMessage translatableMessage)
         {
-            var text = string.Format(translatableMessage.Key, translatableMessage.Args.Select<string, object?>(s => s).ToArray());
+            var text = string.Format(translatableMessage.Key,
+                translatableMessage.Args.Select<string, object?>(s => s).ToArray());
             text = HtmlEncoder.Default.Encode(text);
             result.Append(text);
         }
+
         if (message is NewlineMessage newlineMessage)
         {
             result.Append("<br/>");
         }
+
         if (message is EmptyMessage emptyMessage)
         {
         }
@@ -72,31 +76,31 @@ public class MessageHelper
         {
             // Todo: Color
         }
-        
+
         if (message.Bold)
         {
             result.Insert(0, "<b>");
             result.Append("</b>");
         }
-        
+
         if (message.Italic)
         {
             result.Insert(0, "<i>");
             result.Append("</i>");
         }
-        
+
         if (message.Underline)
         {
             result.Insert(0, "<u>");
             result.Append("</u>");
         }
-        
+
         if (message.Strikethrough)
         {
             result.Insert(0, "<del>");
             result.Append("</del>");
         }
-        
+
         if (message.Spoiler)
         {
             // Todo: Spoiler.

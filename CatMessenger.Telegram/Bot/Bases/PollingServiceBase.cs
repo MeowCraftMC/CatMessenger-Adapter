@@ -14,7 +14,7 @@ public abstract class PollingServiceBase<TReceiverService>(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Starting polling service");
-        
+
         await DoReceive(stoppingToken);
     }
 
@@ -26,7 +26,7 @@ public abstract class PollingServiceBase<TReceiverService>(
             using var scope = serviceProvider.CreateScope();
             var receiver = scope.ServiceProvider.GetRequiredService<TReceiverService>();
             // var receiver = ServiceProvider.GetService<TReceiverService>();
-                
+
             await receiver.ReceiveAsync(stoppingToken);
         }
         catch (Exception ex)

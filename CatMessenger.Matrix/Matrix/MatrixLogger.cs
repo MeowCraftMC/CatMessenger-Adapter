@@ -12,7 +12,7 @@ public class MatrixLogger : ILogger
     {
         Logger = logger;
     }
-    
+
     public void Info(string message)
     {
         Logger.LogInformation(message);

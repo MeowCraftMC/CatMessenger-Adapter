@@ -11,16 +11,16 @@ public class RabbitMqConnector : IDisposable
     {
         Config = config;
         Logger = logger;
-        
+
         Init();
     }
-    
+
     private IConfigProvider Config { get; }
     private ILogger<RabbitMqConnector> Logger { get; }
 
     private ConnectionFactory? Factory { get; set; }
     private IConnection? Connection { get; set; }
-    
+
     public MessageQueue? MessageQueue { get; private set; }
     public CommandQueue? CommandQueue { get; private set; }
 
@@ -34,12 +34,12 @@ public class RabbitMqConnector : IDisposable
             UserName = Config.GetConnectorUsername(),
             Password = Config.GetConnectorPassword()
         };
-        
+
         Connection = Factory!.CreateConnectionAsync().Result;
         MessageQueue = new MessageQueue(Config, Logger, Connection);
         CommandQueue = new CommandQueue(Config, Logger, Connection);
     }
-    
+
     public async Task Connect()
     {
         await MessageQueue!.Connect();
@@ -63,7 +63,7 @@ public class RabbitMqConnector : IDisposable
     {
         await MessageQueue!.Publish(message);
     }
-    
+
     public async Task Publish(ConnectorCommand command)
     {
         await CommandQueue!.Publish(command);

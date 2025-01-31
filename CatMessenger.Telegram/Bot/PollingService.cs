@@ -18,61 +18,86 @@ public class PollingService(
     RabbitMqConnector connector)
     : PollingServiceBase<ReceiverService>(serviceProvider, logger)
 {
+    private int _tries = 0;
+
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
+        while (_tries < 5)
+        {
+            try
+            {
+                await InnerStartAsync(cancellationToken);
+                break;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error on PollingService StartAsync ({}/5)", _tries);
+                _tries += 1;
+                continue;
+            }
+        }
+
+        _tries = 0;
+    }
+
+    private async Task InnerStartAsync(CancellationToken cancellationToken)
+    {
         await connector.Connect();
-        
+
         connector.MessageQueue!.OnMessage += async message =>
         {
             await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
-                parseMode: ParseMode.Html, cancellationToken: new CancellationToken());
+                parseMode: ParseMode.Html, cancellationToken: cancellationToken);
         };
+
         connector.CommandQueue!.OnCommand += async (command, props) =>
         {
-            if (command.Callback != config.GetName())
+            if (command.Callback != config.GetId())
             {
                 return;
             }
-            
+
             switch (command.Command)
             {
                 case ConnectorCommand.EnumCommand.ResponseOnline:
                     if (int.Parse(command.Arguments[0]) > 0)
                     {
-                        await bot.SendTextMessageAsync(config.GetTelegramChatId(), 
-                            $"<b>服务器 {command.Sender} 有 {command.Arguments[0]} 位玩家在线：</b>\n{string.Join("\n", command.Arguments[1..])}", 
-                            replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html, cancellationToken: new CancellationToken());
+                        await bot.SendTextMessageAsync(config.GetTelegramChatId(),
+                            $"<b>服务器 {command.Sender} 有 {command.Arguments[0]} 位玩家在线：</b>\n{string.Join("\n", command.Arguments[1..])}",
+                            replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html,
+                            cancellationToken: cancellationToken);
                         return;
                     }
 
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(), 
-                        $"<b>服务器 {command.Sender} 目前没人在线</b> :(", 
-                        replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html, cancellationToken: new CancellationToken());
+                    await bot.SendTextMessageAsync(config.GetTelegramChatId(),
+                        $"<b>服务器 {command.Sender} 目前没人在线</b> :(",
+                        replyToMessageId: command.ReplyTo, parseMode: ParseMode.Html,
+                        cancellationToken: cancellationToken);
                     return;
 
                 case ConnectorCommand.EnumCommand.ResponseWorldTime:
                     var time = int.Parse(command.Arguments[0]);
                     if (time < 0)
                     {
-                        await bot.SendTextMessageAsync(config.GetTelegramChatId(), 
-                            $"<b>服务器 {command.Sender} 认为查询条件错误。</b>", 
-                            replyToMessageId: command.ReplyTo, cancellationToken: new CancellationToken());
+                        await bot.SendTextMessageAsync(config.GetTelegramChatId(),
+                            $"<b>服务器 {command.Sender} 认为查询条件错误。</b>",
+                            replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
                         return;
                     }
-                    
+
                     var timeStr = time switch
                     {
                         >= 0 and <= 12000 => "白天☀️",
                         > 12000 and <= 24000 => "夜晚🌙",
                         _ => "奇奇怪怪的时间"
                     };
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(), 
-                        $"<b>服务器 {command.Sender} 的主世界现在是：</b>{timeStr}", 
-                        replyToMessageId: command.ReplyTo, cancellationToken: new CancellationToken());
+                    await bot.SendTextMessageAsync(config.GetTelegramChatId(),
+                        $"<b>服务器 {command.Sender} 的主世界现在是：</b>{timeStr}",
+                        replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
                     return;
                 case ConnectorCommand.EnumCommand.Error:
-                    await bot.SendTextMessageAsync(config.GetTelegramChatId(), "查询发生错误！", 
-                        replyToMessageId: command.ReplyTo, cancellationToken: new CancellationToken());
+                    await bot.SendTextMessageAsync(config.GetTelegramChatId(), "查询发生错误！",
+                        replyToMessageId: command.ReplyTo, cancellationToken: cancellationToken);
                     return;
                 case ConnectorCommand.EnumCommand.Online:
                 case ConnectorCommand.EnumCommand.Offline:
@@ -101,9 +126,12 @@ public class PollingService(
                 Command = "meow",
                 Description = "喵~"
             }
-        ], cancellationToken: new CancellationToken());
-        
-        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！", cancellationToken: cancellationToken);
+        ], cancellationToken: cancellationToken);
+
+        await base.StartAsync(cancellationToken);
+
+        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！",
+            cancellationToken: cancellationToken);
         await connector.Publish(new ConnectorMessage
         {
             Content = new TextMessage
@@ -111,13 +139,13 @@ public class PollingService(
                 Text = "适配器启动了！"
             }
         });
-        await base.StartAsync(cancellationToken);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await connector.Disconnect();
-        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！", cancellationToken: cancellationToken);
+        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！",
+            cancellationToken: cancellationToken);
         await connector.Publish(new ConnectorMessage
         {
             Content = new TextMessage

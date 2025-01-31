@@ -11,7 +11,7 @@ public class MatrixClient : IHostedService
     private ConfigManager Config { get; }
     private RabbitMqConnector Connector { get; }
     private ILogger<MatrixClient> Logger { get; }
-    
+
     private MatrixBot.Sdk.MatrixBot Bot { get; set; }
 
     public MatrixClient(ConfigManager config, RabbitMqConnector connector, ILogger<MatrixClient> logger)
@@ -19,7 +19,7 @@ public class MatrixClient : IHostedService
         Config = config;
         Connector = connector;
         Logger = logger;
-        
+
         Bot = new MatrixBot.Sdk.MatrixBot(new MatrixLogger(logger), new MatrixConfig(config));
 
         Bot.OnEvent += (_, args) =>
@@ -30,7 +30,7 @@ public class MatrixClient : IHostedService
 
             var sender = args.Event.Sender;
             var content = args.Event.Content;
-            
+
             Logger.LogInformation(sender);
             Logger.LogInformation(content.Body);
             Logger.LogInformation(content.Format);
@@ -42,7 +42,8 @@ public class MatrixClient : IHostedService
 
         Connector.MessageQueue.OnMessage += message =>
         {
-            Bot.PostRoomMessage(Config.GetMatrixRoomId(), MessageHelper.ToMatrixPlain(message.Sender, message.Content), "");
+            Bot.PostRoomMessage(Config.GetMatrixRoomId(),
+                MessageHelper.ToMatrixPlain(message.Sender, message.Content), "");
         };
     }
 

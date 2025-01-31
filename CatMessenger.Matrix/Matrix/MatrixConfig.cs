@@ -11,12 +11,12 @@ public class MatrixConfig : IMatrixBotStore
     {
         Config = config;
     }
-    
+
     public MatrixBotConfig? Read()
     {
         return new MatrixBotConfig
         {
-            ServerUri = Config.GetMatrixUri(), 
+            ServerUri = Config.GetMatrixUri(),
             Username = Config.GetMatrixUsername(),
             Password = Config.GetMatrixPassword()
         };

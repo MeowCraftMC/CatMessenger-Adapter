@@ -38,7 +38,7 @@ builder.Services.AddHttpClient("TelegramBotClient")
             {
                 throw new ArgumentException("Config section Telegram:Proxy:Url should not be null.");
             }
-            
+
             httpClientHandler.Proxy = new WebProxy
             {
                 Address = new Uri(url)

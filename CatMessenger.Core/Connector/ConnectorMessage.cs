@@ -6,8 +6,7 @@ namespace CatMessenger.Core.Connector;
 
 public class ConnectorMessage
 {
-    [JsonProperty("client")]
-    public string Client { get; set; }
+    [JsonProperty("client")] public string Client { get; set; }
 
     [JsonProperty("content")]
     [JsonConverter(typeof(AbstractMessageConverter))]
@@ -16,7 +15,7 @@ public class ConnectorMessage
     [JsonProperty("sender")]
     [JsonConverter(typeof(AbstractMessageConverter))]
     public AbstractMessage? Sender { get; set; }
-    
+
     [JsonProperty("time")]
     [JsonConverter(typeof(DateTimeConverter))]
     public DateTime? Time { get; set; }

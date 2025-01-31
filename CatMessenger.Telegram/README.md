@@ -1,4 +1,5 @@
 # 前置条件
+
 1. TelegramBot
 2. Telegram群组
 3. 网络代理（可选）
@@ -21,7 +22,9 @@
 与之前的教程相同，需要使用同一个Rabbit配置和服务器。
 
 # 持久运行
+
 通过`systemd`
+
 ```service
 [Unit]
 Description=CatMessenger Telegram Service

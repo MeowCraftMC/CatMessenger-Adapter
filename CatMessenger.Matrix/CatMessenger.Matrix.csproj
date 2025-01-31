@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CatMessenger.Core\CatMessenger.Core.csproj" />
+        <ProjectReference Include="..\CatMessenger.Core\CatMessenger.Core.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -37,7 +37,7 @@ namespace CatMessenger.Core.Message.Converter
             }
 
             var jObj = JObject.Load(reader);
-            
+
             if (hasExistingValue)
             {
                 existingValue!.Read(jObj);

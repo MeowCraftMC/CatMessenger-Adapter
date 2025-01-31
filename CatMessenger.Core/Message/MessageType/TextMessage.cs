@@ -5,7 +5,7 @@ namespace CatMessenger.Core.Message.MessageType;
 public class TextMessage : AbstractMessage
 {
     public string Text { get; set; } = string.Empty;
-    
+
     public override string GetType()
     {
         return "text";
