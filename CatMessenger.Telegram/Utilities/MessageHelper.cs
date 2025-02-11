@@ -1,8 +1,5 @@
 ﻿using System.Text;
 using System.Text.Encodings.Web;
-using CatMessenger.Core.Connector;
-using CatMessenger.Core.Message;
-using CatMessenger.Core.Message.MessageType;
 
 namespace CatMessenger.Telegram.Utilities;
 
@@ -11,11 +8,9 @@ public class MessageHelper
     public static string ToCombinedHtml(ConnectorMessage message)
     {
         if (message.Sender is null)
-        {
             return $"""
                     〔{message.Client}〕{ToHtml(message.Content)}
                     """;
-        }
 
         return $"""
                 〔{message.Client}〕<b>{ToHtml(message.Sender)}</b>：
@@ -25,10 +20,7 @@ public class MessageHelper
 
     public static string ToHtml(AbstractMessage? message)
     {
-        if (message is null)
-        {
-            return string.Empty;
-        }
+        if (message is null) return string.Empty;
 
         var result = new StringBuilder();
         if (message is TextMessage textMessage)
@@ -45,10 +37,7 @@ public class MessageHelper
             result.Append(text);
         }
 
-        if (message is NewlineMessage newlineMessage)
-        {
-            result.Append("<br/>");
-        }
+        if (message is NewlineMessage newlineMessage) result.Append("<br/>");
 
         if (message is EmptyMessage emptyMessage)
         {
@@ -65,12 +54,8 @@ public class MessageHelper
         }
 
         if (message.Extras.Count != 0)
-        {
             foreach (var extra in message.Extras)
-            {
                 result.Append(ToHtml(extra));
-            }
-        }
 
         if (message.Color != MessageColor.Reset)
         {

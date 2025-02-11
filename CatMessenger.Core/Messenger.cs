@@ -8,11 +8,6 @@ namespace CatMessenger.Core;
 
 public class Messenger
 {
-    private ConnectionFactory Factory { get; set; }
-    private IConnection? Connection { get; set; }
-
-    public AbstractNotify<Message> Message { get; private set; }
-
     private IConfigProvider _config;
 
     public Messenger(IConfigProvider config, ILogger<Messenger> logger)
@@ -31,6 +26,11 @@ public class Messenger
 
         Message = new MessageNotify(config.GetId(), GetConnection, logger);
     }
+
+    private ConnectionFactory Factory { get; }
+    private IConnection? Connection { get; set; }
+
+    public AbstractNotify<Message> Message { get; }
 
     public async Task ConnectAsync()
     {

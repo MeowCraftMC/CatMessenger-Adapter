@@ -31,40 +31,28 @@ public class UpdateMessageHelper
 
     private static AbstractMessage GetFromUser(User? user)
     {
-        if (user is null)
-        {
-            return new EmptyMessage();
-        }
+        if (user is null) return new EmptyMessage();
 
         var from = new TextMessage();
         if (string.IsNullOrWhiteSpace(user.LastName))
-        {
             from.Text = $"{user.FirstName}";
-        }
         else
-        {
             from.Text = $"{user.FirstName} {user.LastName}";
-        }
 
         from.Color = MessageColor.Aqua;
 
         if (!string.IsNullOrWhiteSpace(user.Username))
-        {
             from.Hover = new TextMessage
             {
                 Text = $"@{user.Username}"
             };
-        }
 
         return from;
     }
 
     private static AbstractMessage GetFromChat(Chat? chat)
     {
-        if (chat is null)
-        {
-            return new EmptyMessage();
-        }
+        if (chat is null) return new EmptyMessage();
 
         var from = new TextMessage();
         switch (chat.Type)
@@ -78,17 +66,11 @@ public class UpdateMessageHelper
             case ChatType.Private or ChatType.Sender:
             {
                 var text = string.Empty;
-                if (!string.IsNullOrWhiteSpace(chat.FirstName))
-                {
-                    text += $"{chat.FirstName}";
-                }
+                if (!string.IsNullOrWhiteSpace(chat.FirstName)) text += $"{chat.FirstName}";
 
                 if (!string.IsNullOrWhiteSpace(chat.LastName))
                 {
-                    if (!string.IsNullOrWhiteSpace(text))
-                    {
-                        text += " ";
-                    }
+                    if (!string.IsNullOrWhiteSpace(text)) text += " ";
 
                     text += $"{chat.LastName}";
                 }
@@ -97,12 +79,10 @@ public class UpdateMessageHelper
                 from.Color = MessageColor.Aqua;
 
                 if (!string.IsNullOrWhiteSpace(chat.Username))
-                {
                     from.Hover = new TextMessage
                     {
                         Text = $"@{chat.Username}"
                     };
-                }
 
                 break;
             }
@@ -115,10 +95,7 @@ public class UpdateMessageHelper
     {
         var message = new EmptyMessage();
 
-        if (string.IsNullOrWhiteSpace(originText))
-        {
-            return message;
-        }
+        if (string.IsNullOrWhiteSpace(originText)) return message;
 
         var text = originText.Replace('\n', ' ');
 
@@ -377,54 +354,41 @@ public class UpdateMessageHelper
         }
 
         if (message.Photo is { Length: > 0 })
-        {
             chatMsg.Extras.Add(new TextMessage
             {
                 Text = "[图片] ",
                 Color = MessageColor.Green
             });
-        }
 
-        if (message.Sticker != null)
-        {
-            chatMsg.Extras.Add(GetSticker(message.Sticker));
-        }
+        if (message.Sticker != null) chatMsg.Extras.Add(GetSticker(message.Sticker));
 
         if (message.Document != null)
-        {
             chatMsg.Extras.Add(new TextMessage
             {
                 Text = $"[文件 {message.Document.FileName}] ",
                 Color = MessageColor.Blue
             });
-        }
 
         if (message.Voice != null)
-        {
             chatMsg.Extras.Add(new TextMessage
             {
                 Text = $"[语音 {message.Voice.Duration}秒] ",
                 Color = MessageColor.Blue
             });
-        }
 
         if (message.Audio != null)
-        {
             chatMsg.Extras.Add(new TextMessage
             {
                 Text = $"[音频 {message.Audio.Duration}秒] ",
                 Color = MessageColor.Blue
             });
-        }
 
         if (message.Video != null)
-        {
             chatMsg.Extras.Add(new TextMessage
             {
                 Text = $"[视频 {message.Video.Duration}秒] ",
                 Color = MessageColor.Blue
             });
-        }
 
         chatMsg.Extras.Add(GetStyledMessage(message.Caption ?? message.Text ?? string.Empty,
             message.CaptionEntities ?? message.Entities ?? []));
@@ -451,7 +415,7 @@ public class UpdateMessageHelper
         {
             Content = new TextMessage
             {
-                Text = $"[未知消息] ",
+                Text = "[未知消息] ",
                 Color = MessageColor.Red
             }
         };

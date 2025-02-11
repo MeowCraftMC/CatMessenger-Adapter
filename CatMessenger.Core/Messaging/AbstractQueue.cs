@@ -25,8 +25,8 @@ public abstract class AbstractQueue(string clientId, Func<IConnection> connectio
 
         Closed = false;
 
-        await Channel.ExchangeDeclareAsync(GetExchangeName(), GetExchangeType(), durable: true, autoDelete: false);
-        await Channel.QueueDeclareAsync(GetQueueName(), durable: true, exclusive: true, autoDelete: true);
+        await Channel.ExchangeDeclareAsync(GetExchangeName(), GetExchangeType(), true, false);
+        await Channel.QueueDeclareAsync(GetQueueName(), true, true, true);
         await Channel.QueueBindAsync(GetQueueName(), GetExchangeName(), GetRoutingKey());
         await Channel.BasicConsumeAsync(GetQueueName(), false, CreateConsumer());
     }
@@ -37,10 +37,7 @@ public abstract class AbstractQueue(string clientId, Func<IConnection> connectio
         {
             Closed = true;
 
-            if (Channel is not null && Channel.IsOpen)
-            {
-                await Channel.CloseAsync();
-            }
+            if (Channel is not null && Channel.IsOpen) await Channel.CloseAsync();
         }
     }
 
@@ -51,15 +48,9 @@ public abstract class AbstractQueue(string clientId, Func<IConnection> connectio
         {
             try
             {
-                if (Closed)
-                {
-                    return;
-                }
+                if (Closed) return;
 
-                if (Channel is null)
-                {
-                    await ConnectAsync();
-                }
+                if (Channel is null) await ConnectAsync();
 
                 var props = new BasicProperties
                 {
@@ -85,15 +76,9 @@ public abstract class AbstractQueue(string clientId, Func<IConnection> connectio
         {
             try
             {
-                if (Closed)
-                {
-                    return;
-                }
+                if (Closed) return;
 
-                if (Channel is null)
-                {
-                    await ConnectAsync();
-                }
+                if (Channel is null) await ConnectAsync();
 
                 var props = new BasicProperties
                 {

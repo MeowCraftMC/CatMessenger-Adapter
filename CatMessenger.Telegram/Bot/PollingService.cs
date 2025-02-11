@@ -1,11 +1,9 @@
 ﻿using CatMessenger.Core;
 using CatMessenger.Telegram.Bot.Bases;
 using CatMessenger.Telegram.Config;
-using CatMessenger.Telegram.Utilities;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace CatMessenger.Telegram.Bot;
 
@@ -17,12 +15,11 @@ public class PollingService(
     Messenger messenger)
     : PollingServiceBase<ReceiverService>(serviceProvider, logger)
 {
-    private int _tries = 0;
+    private int _tries;
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
         while (_tries < 5)
-        {
             try
             {
                 await InnerStartAsync(cancellationToken);
@@ -32,9 +29,7 @@ public class PollingService(
             {
                 logger.LogError(ex, "Error on PollingService StartAsync ({}/5)", _tries);
                 _tries += 1;
-                continue;
             }
-        }
 
         _tries = 0;
     }

@@ -13,8 +13,8 @@ using Telegram.Bot;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration.Sources.Clear();
-builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true)
-    .AddJsonFile($"config.{ConfigProvider.GetDevEnvironmentVariable()}.json", optional: true, reloadOnChange: true)
+builder.Configuration.AddJsonFile("config.json", true, true)
+    .AddJsonFile($"config.{ConfigProvider.GetDevEnvironmentVariable()}.json", true, true)
     .AddCommandLine(args)
     .AddEnvironmentVariables();
 
@@ -35,9 +35,7 @@ builder.Services.AddHttpClient("TelegramBotClient")
         {
             var url = config.GetTelegramProxyUrl();
             if (string.IsNullOrWhiteSpace(url))
-            {
                 throw new ArgumentException("Config section Telegram:Proxy:Url should not be null.");
-            }
 
             httpClientHandler.Proxy = new WebProxy
             {
@@ -50,7 +48,7 @@ builder.Services.AddHttpClient("TelegramBotClient")
     .RemoveAllLoggers()
     .AddTypedClient<ITelegramBotClient>((client, _) =>
     {
-        var options = new TelegramBotClientOptions(token: config.GetTelegramToken());
+        var options = new TelegramBotClientOptions(config.GetTelegramToken());
         return new TelegramBotClient(options, client);
     });
 

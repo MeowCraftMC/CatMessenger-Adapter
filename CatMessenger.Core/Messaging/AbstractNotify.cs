@@ -11,9 +11,9 @@ public abstract class AbstractNotify<TMessage>(
     ILogger logger) :
     AbstractQueue(clientId, connection, logger)
 {
-    private readonly ILogger _logger = logger;
-
     public delegate void Handler(TMessage message);
+
+    private readonly ILogger _logger = logger;
 
     public event Handler? OnMessage;
 
@@ -44,7 +44,7 @@ public abstract class AbstractNotify<TMessage>(
     {
         public override async Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered,
             string exchange, string routingKey, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body,
-            CancellationToken cancellationToken = new CancellationToken())
+            CancellationToken cancellationToken = new())
         {
             if (queue.ClientId == properties.AppId)
             {

@@ -5,36 +5,6 @@ namespace CatMessenger.Telegram.Config;
 
 public class ConfigProvider(IConfiguration config) : IConfigProvider
 {
-    public static string GetDevEnvironmentVariable()
-    {
-        return Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
-    }
-
-    private static bool HasDevEnvironmentVariable()
-    {
-        return GetDevEnvironmentVariable().Equals("Development", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public string GetTelegramToken()
-    {
-        return config.GetValue<string>("Telegram:Token") ?? "";
-    }
-
-    public bool IsTelegramProxyEnabled()
-    {
-        return config.GetValue<bool>("Telegram:Proxy:Enabled");
-    }
-
-    public string GetTelegramProxyUrl()
-    {
-        return config.GetValue<string>("Telegram:Proxy:Url") ?? "";
-    }
-
-    public long GetTelegramChatId()
-    {
-        return long.Parse(config.GetValue<string>("Telegram:ChatId")!);
-    }
-
     public bool IsDebug()
     {
         return HasDevEnvironmentVariable() || config.GetValue<bool>("Debug");
@@ -73,5 +43,35 @@ public class ConfigProvider(IConfiguration config) : IConfigProvider
     public string GetRabbitMqPassword()
     {
         return config.GetValue<string>("Connector:Password") ?? "";
+    }
+
+    public static string GetDevEnvironmentVariable()
+    {
+        return Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+    }
+
+    private static bool HasDevEnvironmentVariable()
+    {
+        return GetDevEnvironmentVariable().Equals("Development", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public string GetTelegramToken()
+    {
+        return config.GetValue<string>("Telegram:Token") ?? "";
+    }
+
+    public bool IsTelegramProxyEnabled()
+    {
+        return config.GetValue<bool>("Telegram:Proxy:Enabled");
+    }
+
+    public string GetTelegramProxyUrl()
+    {
+        return config.GetValue<string>("Telegram:Proxy:Url") ?? "";
+    }
+
+    public long GetTelegramChatId()
+    {
+        return long.Parse(config.GetValue<string>("Telegram:ChatId")!);
     }
 }

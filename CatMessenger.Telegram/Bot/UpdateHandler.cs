@@ -30,10 +30,7 @@ public class UpdateHandler(
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
     {
-        if (update.Message != null && update.Message.Chat.Id != config.GetTelegramChatId())
-        {
-            return;
-        }
+        if (update.Message != null && update.Message.Chat.Id != config.GetTelegramChatId()) return;
 
         // if (update.Type == UpdateType.Message
         //     && update.Message!.Type == MessageType.Text
@@ -46,12 +43,9 @@ public class UpdateHandler(
         // }
 
         var message = UpdateMessageHelper.FromUpdate(update);
-        
-        if (config.IsDebug())
-        {
-            logger.LogInformation("Telegram message: {Message}", message.ToString());
-        }
-        
+
+        if (config.IsDebug()) logger.LogInformation("Telegram message: {Message}", message.ToString());
+
         await messenger.Message.PublishAsync(message);
     }
 
