@@ -25,4 +25,11 @@ public abstract class AbstractComponent : IStyledComponent
     public string? Insertion { get; set; }
     public ClickEvent? ClickEvent { get; set; }
     public HoverEvent? HoverEvent { get; set; }
+
+    public abstract string GetString();
+
+    public override string ToString()
+    {
+        return GetString();
+    }
 }

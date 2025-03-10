@@ -1,96 +1,84 @@
 ﻿using System.Text;
 using System.Text.Encodings.Web;
+using CatMessenger.Core.Component;
+using CatMessenger.Core.Model;
 
 namespace CatMessenger.Telegram.Utilities;
 
 public class MessageHelper
 {
-    public static string ToCombinedHtml(ConnectorMessage message)
+    public static string ToCombinedHtml(Message message)
     {
         if (message.Sender is null)
             return $"""
-                    〔{message.Client}〕{ToHtml(message.Content)}
+                    〔{message.Platform}〕{ToHtml(message.GetContent())}
                     """;
 
         return $"""
-                〔{message.Client}〕<b>{ToHtml(message.Sender)}</b>：
-                {ToHtml(message.Content)}
+                〔{message.Platform}〕<b>{ToHtml(message.Sender)}</b>：
+                {ToHtml(message.GetContent())}
                 """;
     }
 
-    public static string ToHtml(AbstractMessage? message)
+    private static string ToHtml(AbstractComponent? component)
     {
-        if (message is null) return string.Empty;
+        if (component is null) return string.Empty;
 
-        var result = new StringBuilder();
-        if (message is TextMessage textMessage)
+        var builder = new StringBuilder();
+        builder.Append(HtmlEncoder.Default.Encode(component.ToString()));
+
+        foreach (var e in component.Extra) builder.Append(ToHtml(e));
+
+        if (component.HoverEvent != null)
         {
-            var text = HtmlEncoder.Default.Encode(textMessage.Text);
-            result.Append(text);
+            // Todo: not support hover
         }
 
-        if (message is TranslatableMessage translatableMessage)
+        if (component.ClickEvent != null)
         {
-            var text = string.Format(translatableMessage.Key,
-                translatableMessage.Args.Select<string, object?>(s => s).ToArray());
-            text = HtmlEncoder.Default.Encode(text);
-            result.Append(text);
+            // Todo: not support click
         }
 
-        if (message is NewlineMessage newlineMessage) result.Append("<br/>");
-
-        if (message is EmptyMessage emptyMessage)
+        if (component.Color != null)
         {
+            // Todo: not support color
         }
 
-        if (message.HasHoverMessage())
+        if (component.Bold)
         {
-            // Todo: Hover
+            builder.Insert(0, "<b>");
+            builder.Append("</b>");
         }
 
-        if (message.HasClickEvent())
+        if (component.Italic)
         {
-            // Todo: Click
+            builder.Insert(0, "<i>");
+            builder.Append("</i>");
         }
 
-        if (message.Extras.Count != 0)
-            foreach (var extra in message.Extras)
-                result.Append(ToHtml(extra));
-
-        if (message.Color != MessageColor.Reset)
+        if (component.Underlined)
         {
-            // Todo: Color
+            builder.Insert(0, "<u>");
+            builder.Append("</u>");
         }
 
-        if (message.Bold)
+        if (component.Strikethrough)
         {
-            result.Insert(0, "<b>");
-            result.Append("</b>");
+            builder.Insert(0, "<del>");
+            builder.Append("</del>");
         }
 
-        if (message.Italic)
+        if (component.Obfuscated)
         {
-            result.Insert(0, "<i>");
-            result.Append("</i>");
+            builder.Insert(0, "<tg-spoiler>");
+            builder.Append("</tg-spoiler>");
         }
 
-        if (message.Underline)
-        {
-            result.Insert(0, "<u>");
-            result.Append("</u>");
-        }
+        return builder.ToString();
+    }
 
-        if (message.Strikethrough)
-        {
-            result.Insert(0, "<del>");
-            result.Append("</del>");
-        }
-
-        if (message.Spoiler)
-        {
-            // Todo: Spoiler.
-        }
-
-        return result.ToString();
+    private static string ToHtml(Player player)
+    {
+        return player.Name ?? player.Id;
     }
 }

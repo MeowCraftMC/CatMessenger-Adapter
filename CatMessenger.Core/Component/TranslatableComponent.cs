@@ -11,4 +11,9 @@ public class TranslatableComponent : AbstractComponent
     public string? Fallback { get; set; }
 
     public List<AbstractComponent> With { get; set; } = [];
+
+    public override string GetString()
+    {
+        return string.Format(Translate, With);
+    }
 }

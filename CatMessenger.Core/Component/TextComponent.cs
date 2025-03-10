@@ -2,9 +2,14 @@
 
 namespace CatMessenger.Core.Component;
 
-public class TextComponent : AbstractComponent
+public class TextComponent(string text) : AbstractComponent
 {
     public override ComponentType? Type { get; set; } = ComponentType.Text;
 
-    public required string Text { get; set; } = string.Empty;
+    public string Text { get; set; } = text;
+
+    public override string GetString()
+    {
+        return Text;
+    }
 }

@@ -1,9 +1,11 @@
 ﻿using CatMessenger.Core;
 using CatMessenger.Telegram.Bot.Bases;
 using CatMessenger.Telegram.Config;
+using CatMessenger.Telegram.Utilities;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace CatMessenger.Telegram.Bot;
 
@@ -40,8 +42,8 @@ public class PollingService(
 
         messenger.Message.OnMessage += async message =>
         {
-            // await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
-            //     parseMode: ParseMode.Html, cancellationToken: cancellationToken);
+            await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
+                parseMode: ParseMode.Html, cancellationToken: cancellationToken);
         };
 
         await bot.SetMyCommandsAsync([
@@ -66,13 +68,6 @@ public class PollingService(
 
         await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！",
             cancellationToken: cancellationToken);
-        // await catMessenger.Message.PublishAsync(new ConnectorMessage
-        // {
-        //     Content = new TextMessage
-        //     {
-        //         Text = "适配器启动了！"
-        //     }
-        // });
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

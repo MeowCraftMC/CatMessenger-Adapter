@@ -15,6 +15,8 @@ public class UpdateHandler(
     Messenger messenger)
     : IUpdateHandler
 {
+    private DateTime StartTime { get; } = DateTime.Now;
+
     private string? Id { get; set; }
 
     private static Random Random { get; } = new();
@@ -30,7 +32,9 @@ public class UpdateHandler(
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
     {
-        if (update.Message != null && update.Message.Chat.Id != config.GetTelegramChatId()) return;
+        var message = FilterMessage(update);
+
+        if (message is null) return;
 
         // if (update.Type == UpdateType.Message
         //     && update.Message!.Type == MessageType.Text
@@ -42,11 +46,12 @@ public class UpdateHandler(
         //     return;
         // }
 
-        var message = UpdateMessageHelper.FromUpdate(update);
+        var content = UpdateMessageHelper.CreateContentFromMessage(message, message.EditDate != null);
+        var sender = UpdateMessageHelper.CreatePlayerFromSender(message);
 
         if (config.IsDebug()) logger.LogInformation("Telegram message: {Message}", message.ToString());
 
-        await messenger.Message.PublishAsync(message);
+        await messenger.Message.PublishAsync(new Core.Model.Message(config.GetName(), content, sender));
     }
 
     public Task HandlePollingErrorAsync(ITelegramBotClient bot, Exception exception,
@@ -54,6 +59,31 @@ public class UpdateHandler(
     {
         logger.LogWarning(exception, "Polling error!");
         return Task.CompletedTask;
+    }
+
+    private Message? FilterMessage(Update update)
+    {
+        if (update.Message != null
+            && update.Message.Chat.Id != config.GetTelegramChatId()
+            && StartTime.CompareTo(update.Message?.Date) != 1)
+            return update.Message;
+
+        if (update.ChannelPost != null
+            && update.ChannelPost.Chat.Id != config.GetTelegramChatId()
+            && StartTime.CompareTo(update.ChannelPost?.Date) == 1)
+            return update.ChannelPost;
+
+        if (update.EditedMessage != null
+            && update.EditedMessage.Chat.Id != config.GetTelegramChatId()
+            && StartTime.CompareTo(update.EditedMessage?.EditDate) == 1)
+            return update.EditedMessage;
+
+        if (update.EditedChannelPost != null
+            && update.EditedChannelPost.Chat.Id != config.GetTelegramChatId()
+            && StartTime.CompareTo(update.EditedChannelPost?.EditDate) == 1)
+            return update.EditedChannelPost;
+
+        return null;
     }
 
     // public async Task OnCommand(Message message, string command, params string[] args)

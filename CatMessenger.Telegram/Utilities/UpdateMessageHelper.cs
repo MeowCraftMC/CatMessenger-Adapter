@@ -1,67 +1,42 @@
-﻿using Telegram.Bot.Types;
+﻿using CatMessenger.Core.Component;
+using CatMessenger.Core.Model;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Message = Telegram.Bot.Types.Message;
 
 namespace CatMessenger.Telegram.Utilities;
 
 public class UpdateMessageHelper
 {
-    // Todo: ignore outdated messages.
-    public static ConnectorMessage FromUpdate(Update update)
+    private static AbstractComponent CreateUser(User? user)
     {
-        return update.Type switch
+        if (user is null) return new EmptyComponent();
+
+        var name = user.FirstName;
+        if (!string.IsNullOrWhiteSpace(user.LastName)) name += $" {user.LastName}";
+        var from = new TextComponent(name)
         {
-            UpdateType.Unknown => FromUnknown(update),
-            UpdateType.Message => FromMessage(update.Message!),
-            UpdateType.InlineQuery => FromUnsupported(update),
-            UpdateType.ChosenInlineResult => FromUnsupported(update),
-            UpdateType.CallbackQuery => FromUnsupported(update),
-            UpdateType.EditedMessage => FromMessage(update.EditedMessage!, true),
-            UpdateType.ChannelPost => FromMessage(update.ChannelPost!),
-            UpdateType.EditedChannelPost => FromMessage(update.EditedChannelPost!, true),
-            UpdateType.ShippingQuery => FromUnsupported(update),
-            UpdateType.PreCheckoutQuery => FromUnsupported(update),
-            UpdateType.Poll => FromUnsupported(update),
-            UpdateType.PollAnswer => FromUnsupported(update),
-            UpdateType.MyChatMember => FromUnsupported(update),
-            UpdateType.ChatMember => FromUnsupported(update),
-            UpdateType.ChatJoinRequest => FromUnsupported(update),
-            _ => FromUnknown(update)
+            Color = ComponentColor.Aqua
         };
-    }
-
-    private static AbstractMessage GetFromUser(User? user)
-    {
-        if (user is null) return new EmptyMessage();
-
-        var from = new TextMessage();
-        if (string.IsNullOrWhiteSpace(user.LastName))
-            from.Text = $"{user.FirstName}";
-        else
-            from.Text = $"{user.FirstName} {user.LastName}";
-
-        from.Color = MessageColor.Aqua;
 
         if (!string.IsNullOrWhiteSpace(user.Username))
-            from.Hover = new TextMessage
-            {
-                Text = $"@{user.Username}"
-            };
+            from.HoverEvent = new HoverEvent(new TextComponent($"@{user.Username}"));
 
         return from;
     }
 
-    private static AbstractMessage GetFromChat(Chat? chat)
+    private static AbstractComponent CreateChat(Chat? chat)
     {
-        if (chat is null) return new EmptyMessage();
+        if (chat is null) return new EmptyComponent();
 
-        var from = new TextMessage();
         switch (chat.Type)
         {
             case ChatType.Channel or ChatType.Supergroup or ChatType.Group:
             {
-                from.Text = chat.Title!;
-                from.Bold = true;
-                break;
+                return new TextComponent(chat.Title!)
+                {
+                    Bold = true
+                };
             }
             case ChatType.Private or ChatType.Sender:
             {
@@ -75,69 +50,43 @@ public class UpdateMessageHelper
                     text += $"{chat.LastName}";
                 }
 
-                from.Text = text;
-                from.Color = MessageColor.Aqua;
+                var c = new TextComponent(text)
+                {
+                    Color = ComponentColor.Aqua
+                };
 
                 if (!string.IsNullOrWhiteSpace(chat.Username))
-                    from.Hover = new TextMessage
-                    {
-                        Text = $"@{chat.Username}"
-                    };
+                    c.HoverEvent = new HoverEvent(new TextComponent($"@{chat.Username}"));
 
-                break;
+                return c;
             }
         }
 
-        return from;
+        return new EmptyComponent();
     }
 
-    private static AbstractMessage GetText(string originText)
+    private static AbstractComponent DecorateByEntity(AbstractComponent component, MessageEntity entity,
+        bool disableHover = false)
     {
-        var message = new EmptyMessage();
-
-        if (string.IsNullOrWhiteSpace(originText)) return message;
-
-        var text = originText.Replace('\n', ' ');
-
-        message.Extras.Add(new TextMessage
-        {
-            Text = text
-        });
-
-        return message;
-    }
-
-    private static AbstractMessage GetStyledText(MessageEntity entity, string text, bool disableHover = false)
-    {
-        var message = new TextMessage
-        {
-            Text = text
-        };
-
         switch (entity.Type)
         {
             case MessageEntityType.Mention:
             case MessageEntityType.TextMention:
             {
-                message.Color = MessageColor.Blue;
-                message.Underline = true;
+                component.Color = ComponentColor.Blue;
+                component.Underlined = true;
 
-                var hover = GetFromUser(entity.User);
+                var hover = CreateUser(entity.User);
                 if (disableHover)
                 {
-                    message.Extras.Add(new TextMessage
-                    {
-                        Text = " ("
-                    });
-                    message.Extras.Add(hover);
-                    message.Extras.Add(new TextMessage
-                    {
-                        Text = ") "
-                    });
+                    var h = new TextComponent(" (");
+                    h.Extra.Add(hover);
+                    h.Extra.Add(new TextComponent(") "));
+                    component.Extra.Add(h);
                 }
                 else
                 {
-                    message.Hover = hover;
+                    component.HoverEvent = new HoverEvent(hover);
                 }
 
                 break;
@@ -145,58 +94,51 @@ public class UpdateMessageHelper
             case MessageEntityType.Url:
             case MessageEntityType.TextLink:
             {
-                message.Color = MessageColor.Blue;
-                message.Underline = true;
+                component.Color = ComponentColor.Blue;
+                component.Underlined = true;
+                if (entity.Url is not null)
+                {
+                    component.ClickEvent = new ClickEvent(ClickAction.CopyToClipboard, entity.Url);
 
-                var hover = new TextMessage
-                {
-                    Text = entity.Url!
-                };
-
-                if (disableHover)
-                {
-                    message.Extras.Add(new TextMessage
-                    {
-                        Text = " ("
-                    });
-                    message.Extras.Add(hover);
-                    message.Extras.Add(new TextMessage
-                    {
-                        Text = ") "
-                    });
-                }
-                else
-                {
-                    message.Hover = hover;
+                    if (disableHover)
+                        component.Extra.Add(new TextComponent($" ({entity.Url}) "));
+                    else
+                        component.HoverEvent = new HoverEvent(new TextComponent(entity.Url));
                 }
 
                 break;
             }
+            case MessageEntityType.BotCommand:
             case MessageEntityType.PhoneNumber:
-                message.Color = MessageColor.Blue;
-                break;
             case MessageEntityType.Hashtag:
-                message.Color = MessageColor.Blue;
-                break;
             case MessageEntityType.Email:
-                message.Color = MessageColor.Blue;
+            {
+                component.Color = ComponentColor.Blue;
                 break;
+            }
             case MessageEntityType.Bold:
-                message.Bold = true;
+                component.Bold = true;
                 break;
             case MessageEntityType.Italic:
-                message.Italic = true;
+                component.Italic = true;
                 break;
             case MessageEntityType.Underline:
-                message.Underline = true;
+                component.Underlined = true;
                 break;
             case MessageEntityType.Strikethrough:
-                message.Strikethrough = true;
+                component.Strikethrough = true;
                 break;
             case MessageEntityType.Spoiler:
-                message.Spoiler = true;
+            {
+                component.Obfuscated = true;
+
+                if (disableHover)
+                    component.Extra.Add(new TextComponent($" ({component}) "));
+                else
+                    component.HoverEvent = new HoverEvent(new TextComponent(component.ToString()));
+
                 break;
-            case MessageEntityType.BotCommand:
+            }
             case MessageEntityType.Code:
             case MessageEntityType.Pre:
             case MessageEntityType.Cashtag:
@@ -205,219 +147,181 @@ public class UpdateMessageHelper
                 break;
         }
 
-        return message;
+        return component;
     }
 
-    private static AbstractMessage GetStyledMessage(string text, MessageEntity[] entities)
+    private static List<AbstractComponent> CreateStyledText(string text, MessageEntity[] entities,
+        bool disableHover = false)
     {
-        return new TextMessage
-        {
-            Text = text
-        };
+        if (entities.Length == 0) return [new TextComponent(text)];
 
-        // var message = new EmptyMessage();
-        //
-        // if (entities.Length == 0)
-        // {
-        //     return new TextMessage
-        //     {
-        //         Text = text
-        //     };
-        // }
-        //
-        // var textCursor = 0;
-        // foreach (var entity in entities)
-        // {
-        //     if (entity.Offset > textCursor)
-        //     {
-        //         message.Extras.Add(new TextMessage
-        //         {
-        //             Text = text[textCursor..entity.Offset]
-        //         });
-        //     }
-        //
-        //     if (entity.Offset <= textCursor)
-        //     {
-        //         continue;
-        //         // Todo: Not implemented.
-        //         // qyl27: For combined entities.
-        //     }
-        //
-        //     message.Extras.Add(GetStyledText(entity, text[entity.Offset..(entity.Offset + entity.Length)]));
-        //     textCursor = entity.Offset;
-        // }
-        //
-        // return message;
-    }
-
-    private static AbstractMessage GetSticker(Sticker sticker)
-    {
-        return new TextMessage
+        var result = new List<AbstractComponent>();
+        var entitySet = new HashSet<MessageEntity>();
+        var startCursor = 0;
+        for (var i = 0; i < text.Length; i++)
         {
-            Text = $"[贴纸 {sticker.Emoji}] ",
-            Color = MessageColor.Green,
-            Hover = new TextMessage
+            var currentEntities = new HashSet<MessageEntity>();
+            foreach (var e in entities)
+                if (e.Offset <= i && e.Offset + e.Length > i)
+                    currentEntities.Add(e);
+
+            if (!entitySet.SetEquals(currentEntities))
             {
-                Text = $"来自贴纸包 {sticker.SetName}"
+                var prevText = text.Substring(startCursor, i - 1 - startCursor);
+                AbstractComponent c = new TextComponent(prevText);
+                foreach (var e in entitySet) c = DecorateByEntity(c, e, disableHover);
+                result.Add(c);
+
+                startCursor = i;
+                entitySet = currentEntities;
             }
+        }
+
+        return result;
+    }
+
+    private static AbstractComponent CreateSticker(Sticker sticker)
+    {
+        return new TextComponent($"[贴纸 {sticker.Emoji}] ")
+        {
+            Color = ComponentColor.Green,
+            HoverEvent = new HoverEvent(new TextComponent($"来自贴纸包 {sticker.SetName}"))
         };
     }
 
-    private static ConnectorMessage FromMessage(Message message, bool edited = false)
+    public static AbstractComponent CreateContentFromMessage(Message message, bool edited = false)
     {
-        var msg = new ConnectorMessage();
-        var chatMsg = new EmptyMessage();
-
-        if (message.From != null)
-        {
-            var sender = GetFromUser(message.From);
-            msg.Sender = sender;
-        }
-        else
-        {
-            msg.Sender = new EmptyMessage();
-        }
+        var contentComponent = new EmptyComponent();
 
         if (edited)
         {
-            var edit = new TextMessage
+            var edit = new TextComponent("[已编辑] ")
             {
-                Text = "[已编辑] ",
-                Color = MessageColor.LightPurple
+                Color = ComponentColor.LightPurple
             };
-            chatMsg.Extras.Add(edit);
+            contentComponent.Extra.Add(edit);
         }
 
         if (message.ReplyToMessage != null)
         {
             var reply = message.ReplyToMessage;
 
-            var hover = GetStyledMessage(reply.Caption ?? reply.Text ?? string.Empty,
-                reply.CaptionEntities ?? reply.Entities ?? []);
+            var hover = new EmptyComponent();
+            hover.Extra.AddRange(CreateStyledText(reply.Caption ?? reply.Text!,
+                reply.CaptionEntities ?? reply.Entities ?? []));
 
-            var replyMsg = new TextMessage
+            var hoverEvent = new HoverEvent(hover);
+
+            var replyComponent = new TextComponent("[回复：")
             {
-                Text = "[回复：",
-                Color = MessageColor.LightPurple,
-                Hover = hover
+                Color = ComponentColor.LightPurple,
+                HoverEvent = hoverEvent
             };
 
-            var from = GetFromUser(reply.From);
-            from.Color = MessageColor.Aqua;
-            from.Hover = hover;
-            replyMsg.Extras.Add(from);
+            var from = CreateUser(reply.From);
+            from.Color = ComponentColor.Aqua;
+            from.HoverEvent = hoverEvent;
+            replyComponent.Extra.Add(from);
 
-            replyMsg.Extras.Add(new TextMessage
+            replyComponent.Extra.Add(new TextComponent("] ")
             {
-                Text = "] ",
-                Color = MessageColor.LightPurple,
-                Hover = hover
+                Color = ComponentColor.LightPurple,
+                HoverEvent = hoverEvent
             });
 
-            chatMsg.Extras.Add(replyMsg);
+            contentComponent.Extra.Add(replyComponent);
         }
 
         if (message.ForwardFrom != null)
         {
             var forwardFrom = message.ForwardFrom;
 
-            var forwardMsg = new TextMessage
+            var forwardComponent = new TextComponent("[转发自 ")
             {
-                Text = "[转发自 ",
-                Color = MessageColor.LightPurple
+                Color = ComponentColor.LightPurple
             };
-            forwardMsg.Extras.Add(GetFromUser(forwardFrom));
-            forwardMsg.Extras.Add(new TextMessage
-            {
-                Text = "] "
-            });
+            forwardComponent.Extra.Add(CreateUser(forwardFrom));
+            forwardComponent.Extra.Add(new TextComponent("] "));
 
-            chatMsg.Extras.Add(forwardMsg);
+            contentComponent.Extra.Add(forwardComponent);
         }
 
         if (message.ForwardFromChat != null)
         {
             var forwardFrom = message.ForwardFromChat;
 
-            var forwardMsg = new TextMessage
+            var forwardComponent = new TextComponent("[转发自 ")
             {
-                Text = "[转发自 ",
-                Color = MessageColor.LightPurple
+                Color = ComponentColor.LightPurple
             };
-            forwardMsg.Extras.Add(GetFromChat(forwardFrom));
-            forwardMsg.Extras.Add(new TextMessage
-            {
-                Text = "] "
-            });
+            forwardComponent.Extra.Add(CreateChat(forwardFrom));
+            forwardComponent.Extra.Add(new TextComponent("] "));
 
-            chatMsg.Extras.Add(forwardMsg);
+            contentComponent.Extra.Add(forwardComponent);
         }
 
         if (message.Photo is { Length: > 0 })
-            chatMsg.Extras.Add(new TextMessage
+            contentComponent.Extra.Add(new TextComponent("[图片] ")
             {
-                Text = "[图片] ",
-                Color = MessageColor.Green
+                Color = ComponentColor.Green
             });
 
-        if (message.Sticker != null) chatMsg.Extras.Add(GetSticker(message.Sticker));
+        if (message.Sticker != null) contentComponent.Extra.Add(CreateSticker(message.Sticker));
 
         if (message.Document != null)
-            chatMsg.Extras.Add(new TextMessage
+            contentComponent.Extra.Add(new TextComponent($"[文件 {message.Document.FileName}] ")
             {
-                Text = $"[文件 {message.Document.FileName}] ",
-                Color = MessageColor.Blue
+                Color = ComponentColor.Green
             });
 
         if (message.Voice != null)
-            chatMsg.Extras.Add(new TextMessage
+            contentComponent.Extra.Add(new TextComponent($"[语音 {message.Voice.Duration}秒] ")
             {
-                Text = $"[语音 {message.Voice.Duration}秒] ",
-                Color = MessageColor.Blue
+                Color = ComponentColor.Green
             });
 
         if (message.Audio != null)
-            chatMsg.Extras.Add(new TextMessage
+            contentComponent.Extra.Add(new TextComponent($"[音频 {message.Voice.Duration}秒] ")
             {
-                Text = $"[音频 {message.Audio.Duration}秒] ",
-                Color = MessageColor.Blue
+                Color = ComponentColor.Green
             });
 
         if (message.Video != null)
-            chatMsg.Extras.Add(new TextMessage
+            contentComponent.Extra.Add(new TextComponent($"[视频 {message.Voice.Duration}秒] ")
             {
-                Text = $"[视频 {message.Video.Duration}秒] ",
-                Color = MessageColor.Blue
+                Color = ComponentColor.Green
             });
 
-        chatMsg.Extras.Add(GetStyledMessage(message.Caption ?? message.Text ?? string.Empty,
+        contentComponent.Extra.AddRange(CreateStyledText(message.Caption ?? message.Text!,
             message.CaptionEntities ?? message.Entities ?? []));
 
-        msg.Content = chatMsg;
-        return msg;
+        return contentComponent;
     }
 
-    private static ConnectorMessage FromUnsupported(Update update)
+    public static Player? CreatePlayerFromSender(Message message)
     {
-        return new ConnectorMessage
+        if (message.From is null) return null;
+
+        return new Player
         {
-            Content = new TextMessage
-            {
-                Text = $"[不支持的消息 {update.Type}] ",
-                Color = MessageColor.Red
-            }
+            Id = message.From.Username ?? message.From.Id.ToString(),
+            Name = message.From.FirstName + (message.From.LastName != null ? $" {message.From.LastName}" : string.Empty)
         };
     }
 
-    private static ConnectorMessage FromUnknown(Update update)
+    private static AbstractComponent FromUnsupported(Update update)
     {
-        return new ConnectorMessage
+        return new TextComponent($"[不支持的消息 {update.Type}] ")
         {
-            Content = new TextMessage
-            {
-                Text = "[未知消息] ",
-                Color = MessageColor.Red
-            }
+            Color = ComponentColor.Red
+        };
+    }
+
+    private static AbstractComponent FromUnknown(Update update)
+    {
+        return new TextComponent("[未知消息] ")
+        {
+            Color = ComponentColor.Red
         };
     }
 }
