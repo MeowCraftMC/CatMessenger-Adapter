@@ -5,7 +5,7 @@ namespace CatMessenger.Core.Util;
 
 public class JsonHelper
 {
-    public static JsonSerializerOptions JsonSerializerOptions = new()
+    public static JsonSerializerOptions Options = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -13,11 +13,11 @@ public class JsonHelper
 
     public static string Serialize(object o)
     {
-        return JsonSerializer.Serialize(o, JsonSerializerOptions);
+        return JsonSerializer.Serialize(o, Options);
     }
 
     public static T? Deserialize<T>(string o)
     {
-        return JsonSerializer.Deserialize<T>(o);
+        return JsonSerializer.Deserialize<T>(o, Options);
     }
 }

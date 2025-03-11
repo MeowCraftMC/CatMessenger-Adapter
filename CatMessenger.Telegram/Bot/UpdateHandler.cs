@@ -15,7 +15,10 @@ public class UpdateHandler(
     Messenger messenger)
     : IUpdateHandler
 {
-    private DateTime StartTime { get; } = DateTime.Now;
+    /// <summary>
+    /// TimeZone: UTC
+    /// </summary>
+    private DateTime StartTime { get; } = DateTime.Now.ToUniversalTime();
 
     private string? Id { get; set; }
 
@@ -54,33 +57,33 @@ public class UpdateHandler(
         await messenger.Message.PublishAsync(new Core.Model.Message(config.GetName(), content, sender));
     }
 
-    public Task HandlePollingErrorAsync(ITelegramBotClient bot, Exception exception,
+    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source,
         CancellationToken cancellationToken)
     {
-        logger.LogWarning(exception, "Polling error!");
+        logger.LogWarning(exception, "Error!");
         return Task.CompletedTask;
     }
 
     private Message? FilterMessage(Update update)
     {
         if (update.Message != null
-            && update.Message.Chat.Id != config.GetTelegramChatId()
+            && update.Message.Chat.Id == config.GetTelegramChatId()
             && StartTime.CompareTo(update.Message?.Date) != 1)
             return update.Message;
 
         if (update.ChannelPost != null
-            && update.ChannelPost.Chat.Id != config.GetTelegramChatId()
-            && StartTime.CompareTo(update.ChannelPost?.Date) == 1)
+            && update.ChannelPost.Chat.Id == config.GetTelegramChatId()
+            && StartTime.CompareTo(update.ChannelPost?.Date) != 1)
             return update.ChannelPost;
 
         if (update.EditedMessage != null
-            && update.EditedMessage.Chat.Id != config.GetTelegramChatId()
-            && StartTime.CompareTo(update.EditedMessage?.EditDate) == 1)
+            && update.EditedMessage.Chat.Id == config.GetTelegramChatId()
+            && StartTime.CompareTo(update.EditedMessage?.EditDate) != 1)
             return update.EditedMessage;
 
         if (update.EditedChannelPost != null
-            && update.EditedChannelPost.Chat.Id != config.GetTelegramChatId()
-            && StartTime.CompareTo(update.EditedChannelPost?.EditDate) == 1)
+            && update.EditedChannelPost.Chat.Id == config.GetTelegramChatId()
+            && StartTime.CompareTo(update.EditedChannelPost?.EditDate) != 1)
             return update.EditedChannelPost;
 
         return null;

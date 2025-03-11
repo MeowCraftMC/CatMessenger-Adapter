@@ -156,25 +156,29 @@ public class UpdateMessageHelper
         if (entities.Length == 0) return [new TextComponent(text)];
 
         var result = new List<AbstractComponent>();
-        var entitySet = new HashSet<MessageEntity>();
-        var startCursor = 0;
-        for (var i = 0; i < text.Length; i++)
+        var bufferedEntitySet = new HashSet<MessageEntity>();
+        var bufferStartCursor = 0;
+        for (var bufferEndCursor = 0; bufferEndCursor <= text.Length; bufferEndCursor++)
         {
             var currentEntities = new HashSet<MessageEntity>();
             foreach (var e in entities)
-                if (e.Offset <= i && e.Offset + e.Length > i)
+                if (e.Offset <= bufferEndCursor && e.Offset + e.Length > bufferEndCursor)
                     currentEntities.Add(e);
 
-            if (!entitySet.SetEquals(currentEntities))
+            if (!bufferedEntitySet.SetEquals(currentEntities) || bufferEndCursor == text.Length)
             {
-                var prevText = text.Substring(startCursor, i - 1 - startCursor);
-                AbstractComponent c = new TextComponent(prevText);
-                foreach (var e in entitySet) c = DecorateByEntity(c, e, disableHover);
-                result.Add(c);
-
-                startCursor = i;
-                entitySet = currentEntities;
+                var prevText = text.Substring(bufferStartCursor, bufferEndCursor - bufferStartCursor);
+                if (!string.IsNullOrEmpty(prevText))
+                {
+                    AbstractComponent c = new TextComponent(prevText);
+                    foreach (var e in bufferedEntitySet) c = DecorateByEntity(c, e, disableHover);
+                    result.Add(c);
+                }
+                
+                bufferStartCursor = bufferEndCursor;
             }
+            
+            bufferedEntitySet = currentEntities;
         }
 
         return result;
@@ -292,7 +296,7 @@ public class UpdateMessageHelper
                 Color = ComponentColor.Green
             });
 
-        contentComponent.Extra.AddRange(CreateStyledText(message.Caption ?? message.Text!,
+        contentComponent.Extra.AddRange(CreateStyledText(message.Caption ?? message.Text ?? "",
             message.CaptionEntities ?? message.Entities ?? []));
 
         return contentComponent;
@@ -302,11 +306,8 @@ public class UpdateMessageHelper
     {
         if (message.From is null) return null;
 
-        return new Player
-        {
-            Id = message.From.Username ?? message.From.Id.ToString(),
-            Name = message.From.FirstName + (message.From.LastName != null ? $" {message.From.LastName}" : string.Empty)
-        };
+        return new Player(message.From.Username ?? message.From.Id.ToString(),
+            message.From.FirstName + (message.From.LastName != null ? $" {message.From.LastName}" : string.Empty));
     }
 
     private static AbstractComponent FromUnsupported(Update update)

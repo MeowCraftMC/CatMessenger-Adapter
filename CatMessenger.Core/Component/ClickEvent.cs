@@ -1,8 +1,22 @@
-﻿namespace CatMessenger.Core.Component;
+﻿using System.Text.Json.Serialization;
 
-public class ClickEvent(ClickAction action, string value)
+namespace CatMessenger.Core.Component;
+
+public class ClickEvent
 {
-    public ClickAction Action { get; set; } = action;
+    [JsonConstructor]
+    public ClickEvent()
+    {
+    }
 
-    public string Value { get; set; } = value;
+    public ClickEvent(ClickAction action, string value)
+    {
+        Action = action;
+        Value = value;
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<ClickAction>))]
+    public ClickAction Action { get; set; }
+
+    public string Value { get; set; }
 }

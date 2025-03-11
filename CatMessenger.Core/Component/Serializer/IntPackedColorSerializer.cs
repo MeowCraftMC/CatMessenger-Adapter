@@ -15,7 +15,7 @@ public class IntPackedColorSerializer : JsonConverter<ComponentColor>
                 var value = reader.GetString();
                 if (value == null) return null;
                 return int.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var packed)
-                    ? new ComponentColor(packed)
+                    ? ComponentColor.From(packed)
                     : null;
             }
             case JsonTokenType.StartArray when reader.TryGetSingle(out var a)
@@ -23,12 +23,7 @@ public class IntPackedColorSerializer : JsonConverter<ComponentColor>
                                                && reader.TryGetSingle(out var g)
                                                && reader.TryGetSingle(out var b):
             {
-                var alpha = (int)(a * 255);
-                var red = (int)(r * 255);
-                var green = (int)(g * 255);
-                var blue = (int)(b * 255);
-                var packed = (alpha << 24) + (red << 16) + (green << 8) + blue;
-                return new ComponentColor(packed);
+                return ComponentColor.From(a, r, g, b);
             }
             default:
                 return null;

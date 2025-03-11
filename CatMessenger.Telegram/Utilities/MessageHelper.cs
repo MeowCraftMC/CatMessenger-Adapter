@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using CatMessenger.Core.Component;
 using CatMessenger.Core.Model;
+using CatMessenger.Core.Util.Extension;
 
 namespace CatMessenger.Telegram.Utilities;
 
@@ -11,12 +12,12 @@ public class MessageHelper
     {
         if (message.Sender is null)
             return $"""
-                    〔{message.Platform}〕{ToHtml(message.GetContent())}
+                    〔{message.Platform}〕{ToHtml(message.Content.ToComponent())}
                     """;
 
         return $"""
                 〔{message.Platform}〕<b>{ToHtml(message.Sender)}</b>：
-                {ToHtml(message.GetContent())}
+                {ToHtml(message.Content.ToComponent())}
                 """;
     }
 
@@ -79,6 +80,6 @@ public class MessageHelper
 
     private static string ToHtml(Player player)
     {
-        return player.Name ?? player.Id;
+        return player.Name is not null ? ToHtml(player.Name.ToComponent()) : player.Id;
     }
 }

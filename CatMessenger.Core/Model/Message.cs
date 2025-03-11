@@ -1,26 +1,33 @@
-﻿using CatMessenger.Core.Component;
+﻿using System.Text.Json.Serialization;
+using CatMessenger.Core.Component;
 using CatMessenger.Core.Util;
 
 namespace CatMessenger.Core.Model;
 
-public class Message(string platform, string content, Player? sender = null)
+public class Message
 {
+    [JsonConstructor]
+    public Message()
+    {
+    }
+
     public Message(string platform, AbstractComponent content, Player? sender = null)
         : this(platform, JsonHelper.Serialize(content), sender)
     {
     }
 
-    public string Platform { get; set; } = platform;
+    public Message(string platform, string content, Player? sender = null)
+    {
+        Platform = platform;
+        Sender = sender;
+        Content = content;
+    }
 
-    public Player? Sender { get; set; } = sender;
+    public string Platform { get; set; }
 
-    public string Content { get; set; } = content;
+    public Player? Sender { get; set; }
+
+    public string Content { get; set; }
 
     public DateTime Time { get; set; } = DateTime.Now;
-
-    public AbstractComponent GetContent()
-    {
-        // Todo: not support translatable.
-        return JsonHelper.Deserialize<TextComponent>(content) ?? new EmptyComponent();
-    }
 }

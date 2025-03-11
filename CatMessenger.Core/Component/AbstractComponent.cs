@@ -4,6 +4,9 @@ using CatMessenger.Core.Component.Serializer;
 
 namespace CatMessenger.Core.Component;
 
+[JsonDerivedType(typeof(TextComponent))]
+[JsonDerivedType(typeof(TranslatableComponent))]
+[JsonDerivedType(typeof(EmptyComponent))]
 public abstract class AbstractComponent : IStyledComponent
 {
     public abstract ComponentType? Type { get; set; }

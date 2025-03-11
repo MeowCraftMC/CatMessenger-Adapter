@@ -42,11 +42,11 @@ public class PollingService(
 
         messenger.Message.OnMessage += async message =>
         {
-            await bot.SendTextMessageAsync(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
-                parseMode: ParseMode.Html, cancellationToken: cancellationToken);
+            await bot.SendMessage(config.GetTelegramChatId(), MessageHelper.ToCombinedHtml(message),
+                ParseMode.Html, cancellationToken: cancellationToken);
         };
 
-        await bot.SetMyCommandsAsync([
+        await bot.SetMyCommands([
             // new BotCommand
             // {
             //     Command = "online",
@@ -66,7 +66,7 @@ public class PollingService(
 
         await base.StartAsync(cancellationToken);
 
-        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！",
+        await bot.SendMessage(config.GetTelegramChatId(), $"{config.GetName()} 适配器启动了！",
             cancellationToken: cancellationToken);
     }
 
@@ -79,7 +79,7 @@ public class PollingService(
         //         Text = "适配器关闭了！"
         //     }
         // });
-        await bot.SendTextMessageAsync(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！",
+        await bot.SendMessage(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！",
             cancellationToken: cancellationToken);
         await messenger.DisconnectAsync();
         await base.StopAsync(cancellationToken);

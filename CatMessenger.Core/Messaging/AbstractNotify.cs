@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using CatMessenger.Core.Util;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
@@ -34,7 +35,7 @@ public abstract class AbstractNotify<TMessage>(
 
     public async Task PublishAsync(TMessage message)
     {
-        var json = JsonSerializer.Serialize(message, Constants.JsonSerializerOptions);
+        var json = JsonHelper.Serialize(message!);
         var bytes = Encoding.UTF8.GetBytes(json);
         await PublishAsync(bytes);
     }

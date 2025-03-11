@@ -1,13 +1,27 @@
-﻿namespace CatMessenger.Core.Component;
+﻿using System.Text.Json.Serialization;
 
-public class HoverEvent(HoverAction action, AbstractComponent contents)
+namespace CatMessenger.Core.Component;
+
+public class HoverEvent
 {
+    [JsonConstructor]
+    public HoverEvent()
+    {
+    }
+
     public HoverEvent(AbstractComponent contents) : this(HoverAction.ShowText, contents)
     {
     }
 
-    public HoverAction Action { get; set; } = action;
+    public HoverEvent(HoverAction action, AbstractComponent contents)
+    {
+        Action = action;
+        Contents = contents;
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<HoverAction>))]
+    public HoverAction Action { get; set; }
 
     // Todo: not support entity nor item now.
-    public AbstractComponent Contents { get; set; } = contents;
+    public AbstractComponent Contents { get; set; }
 }

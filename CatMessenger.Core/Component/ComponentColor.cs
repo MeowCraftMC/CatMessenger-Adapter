@@ -1,7 +1,11 @@
-﻿namespace CatMessenger.Core.Component;
+﻿using System.Globalization;
+
+namespace CatMessenger.Core.Component;
 
 public class ComponentColor
 {
+    public static readonly List<ComponentColor> NamedColors = [];
+
     public static readonly ComponentColor Black = new(0x000000, "black");
     public static readonly ComponentColor DarkBlue = new(0x0000AA, "dark_blue");
     public static readonly ComponentColor DarkGreen = new(0x00AA00, "dark_green");
@@ -18,8 +22,6 @@ public class ComponentColor
     public static readonly ComponentColor LightPurple = new(0xFF55FF, "light_purple");
     public static readonly ComponentColor Yellow = new(0xFFFF55, "yellow");
     public static readonly ComponentColor White = new(0xFFFFFF, "white");
-
-    public static readonly List<ComponentColor> NamedColors = [];
 
     public ComponentColor(int hexColor)
     {
@@ -57,5 +59,32 @@ public class ComponentColor
     public override int GetHashCode()
     {
         return HashCode.Combine(Name, Hex);
+    }
+
+    public static ComponentColor? From(string? s)
+    {
+        if (s == null) return null;
+
+        if (!s.StartsWith('#') || s.Length != 7) return NamedColors.FirstOrDefault(named => s == named.Name);
+
+        var hexString = s.Substring(1, 6);
+        return int.TryParse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex)
+            ? From(hex)
+            : null;
+    }
+
+    public static ComponentColor From(int hex)
+    {
+        return new ComponentColor(hex);
+    }
+
+    public static ComponentColor From(float a, float r, float g, float b)
+    {
+        var alpha = (int)(a * 255);
+        var red = (int)(r * 255);
+        var green = (int)(g * 255);
+        var blue = (int)(b * 255);
+        var packed = (alpha << 24) + (red << 16) + (green << 8) + blue;
+        return new ComponentColor(packed);
     }
 }
