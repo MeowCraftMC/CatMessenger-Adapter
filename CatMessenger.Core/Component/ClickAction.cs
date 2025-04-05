@@ -1,17 +1,23 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace CatMessenger.Core.Component;
 
 public enum ClickAction
 {
-    [EnumMember(Value = "open_url")] OpenUrl = 0,
-    [EnumMember(Value = "open_file")] OpenFile = 1,
-    [EnumMember(Value = "run_command")] RunCommand = 2,
+    [JsonStringEnumMemberName("open_url")] OpenUrl = 0,
 
-    [EnumMember(Value = "suggest_command")]
+    [JsonStringEnumMemberName("open_file")]
+    OpenFile = 1,
+
+    [JsonStringEnumMemberName("run_command")]
+    RunCommand = 2,
+
+    [JsonStringEnumMemberName("suggest_command")]
     SuggestCommand = 3,
-    [EnumMember(Value = "change_page")] ChangePage = 4,
 
-    [EnumMember(Value = "copy_to_clipboard")]
+    [JsonStringEnumMemberName("change_page")]
+    ChangePage = 4,
+
+    [JsonStringEnumMemberName("copy_to_clipboard")]
     CopyToClipboard = 5
 }

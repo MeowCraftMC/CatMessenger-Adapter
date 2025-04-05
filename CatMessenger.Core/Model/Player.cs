@@ -15,7 +15,7 @@ public class Player
         Id = id;
         Name = JsonHelper.Serialize(name);
     }
-    
+
     public string Id { get; set; }
 
     public Guid? Uuid { get; set; }

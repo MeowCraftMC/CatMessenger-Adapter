@@ -174,10 +174,10 @@ public class UpdateMessageHelper
                     foreach (var e in bufferedEntitySet) c = DecorateByEntity(c, e, disableHover);
                     result.Add(c);
                 }
-                
+
                 bufferStartCursor = bufferEndCursor;
             }
-            
+
             bufferedEntitySet = currentEntities;
         }
 

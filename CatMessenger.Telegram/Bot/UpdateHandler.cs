@@ -16,7 +16,7 @@ public class UpdateHandler(
     : IUpdateHandler
 {
     /// <summary>
-    /// TimeZone: UTC
+    ///     TimeZone: UTC
     /// </summary>
     private DateTime StartTime { get; } = DateTime.Now.ToUniversalTime();
 
