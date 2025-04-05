@@ -124,7 +124,10 @@ public static class ComponentJsonSerializer
             var value = clickEvent["value"]?.AsValue();
             if (action is not null && value is not null)
                 if (action.TryGetValue<string>(out var a) && value.TryGetValue<string>(out var v))
-                    result.ClickEvent = new ClickEvent(Enum.Parse<ClickAction>(a), v);
+                {
+                    var ac = Enum.Parse<ClickAction>(a.Replace("_", ""), true);
+                    result.ClickEvent = new ClickEvent(ac, v);
+                }
         }
 
         var extra = o["extra"]?.AsArray();
