@@ -16,12 +16,12 @@ public static class ComponentJsonSerializer
         };
     }
 
-    public static List<AbstractComponent> FromJson(JsonArray a)
+    private static List<AbstractComponent> FromJson(JsonArray a)
     {
         return a.Select(FromJson).ToList();
     }
 
-    public static AbstractComponent FromJson(JsonObject o)
+    private static AbstractComponent FromJson(JsonObject o)
     {
         AbstractComponent result;
 
@@ -105,15 +105,27 @@ public static class ComponentJsonSerializer
             if (insertion.TryGetValue<string>(out var v))
                 result.Insertion = v;
 
-        var hoverEvent = o["hoverEvent"]?.AsObject();
+        var hoverEvent = o["hoverEvent"];
         if (hoverEvent is not null)
         {
-            var action = hoverEvent["action"]?.AsValue();
-            var contents = hoverEvent["contents"]?.AsObject();
-            if (action is not null && contents is not null)
+            var action = hoverEvent["action"];
+            // XXX: Handling show_entity and show_item.
+            if (action is not null)
             {
-                var r = FromJson(contents);
-                result.HoverEvent = new HoverEvent(r);
+                var contents = hoverEvent["contents"] ?? hoverEvent["text"];
+
+                if (contents is JsonObject obj)
+                {
+                    var r = FromJson(obj);
+                    result.HoverEvent = new HoverEvent(r);
+                }
+                else if (contents is JsonValue v)
+                {
+                    if (v.TryGetValue<string>(out var s))
+                    {
+                        result.HoverEvent = new HoverEvent(new TextComponent(s));
+                    }
+                }
             }
         }
 
