@@ -150,9 +150,11 @@ public class UpdateMessageHelper
         return component;
     }
 
-    private static List<AbstractComponent> CreateStyledText(string text, MessageEntity[] entities,
+    private static List<AbstractComponent> CreateStyledText(string? text, MessageEntity[] entities,
         bool disableHover = false)
     {
+        if (text is null) return [];
+        
         if (entities.Length == 0) return [new TextComponent(text)];
 
         var result = new List<AbstractComponent>();
@@ -211,7 +213,7 @@ public class UpdateMessageHelper
             var reply = message.ReplyToMessage;
 
             var hover = new EmptyComponent();
-            hover.Extra.AddRange(CreateStyledText(reply.Caption ?? reply.Text!,
+            hover.Extra.AddRange(CreateStyledText(reply.Caption ?? reply.Text,
                 reply.CaptionEntities ?? reply.Entities ?? []));
 
             var hoverEvent = new HoverEvent(hover);
@@ -296,7 +298,7 @@ public class UpdateMessageHelper
                 Color = ComponentColor.Green
             });
 
-        contentComponent.Extra.AddRange(CreateStyledText(message.Caption ?? message.Text ?? "",
+        contentComponent.Extra.AddRange(CreateStyledText(message.Caption ?? message.Text,
             message.CaptionEntities ?? message.Entities ?? []));
 
         return contentComponent;
