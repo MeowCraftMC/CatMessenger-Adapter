@@ -13,10 +13,17 @@ public abstract class ReceiverServiceBase<TUpdateHandler>(
 {
     public async Task ReceiveAsync(CancellationToken stoppingToken)
     {
-        var receiverOptions = new ReceiverOptions();
+        var receiverOptions = new ReceiverOptions
+        {
+            DropPendingUpdates = true
+        };
 
-        var me = await bot.GetMeAsync(stoppingToken);
-        logger.LogInformation("Start receiving updates for @{Name}", me.Username ?? "Telegram Bot");
+        var me = await bot.GetMe(stoppingToken);
+        
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Start receiving updates for @{Name}", me.Username ?? "Telegram Bot");
+        }
 
         await bot.ReceiveAsync(
             updateHandler,
