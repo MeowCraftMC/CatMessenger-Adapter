@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Message = CatMessenger.Core.Model.Message;
 
 namespace CatMessenger.Telegram.Bot;
 
@@ -29,7 +30,10 @@ public class PollingService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error on PollingService StartAsync ({}/5)", _tries);
+                if (logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogError(ex, "Error on PollingService StartAsync ({}/5)", _tries);
+                }
                 _tries += 1;
             }
 
@@ -72,13 +76,12 @@ public class PollingService(
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        // await catMessenger.Message.PublishAsync(new ConnectorMessage
-        // {
-        //     Content = new TextMessage
-        //     {
-        //         Text = "适配器关闭了！"
-        //     }
-        // });
+        await messenger.Message.PublishAsync(new Message
+        {
+            Content = "适配器关闭了！",
+            Platform = config.GetName(),
+            Time = DateTime.Now
+        });
         await bot.SendMessage(config.GetTelegramChatId(), $"{config.GetName()} 适配器关闭了！",
             cancellationToken: cancellationToken);
         await messenger.DisconnectAsync();
