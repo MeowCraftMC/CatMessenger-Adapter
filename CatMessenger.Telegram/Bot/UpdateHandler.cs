@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace CatMessenger.Telegram.Bot;
 
@@ -15,11 +16,6 @@ public class UpdateHandler(
     Messenger messenger)
     : IUpdateHandler
 {
-    /// <summary>
-    ///     TimeZone: UTC
-    /// </summary>
-    private DateTime StartTime { get; } = DateTime.Now.ToUniversalTime();
-
     private string? Id { get; set; }
 
     private static Random Random { get; } = new();
@@ -30,63 +26,82 @@ public class UpdateHandler(
         "喵？喵！",
         "喵喵喵~",
         "Meow~",
+        "喵呜~",
+        "喵～～～",
+        "喵嗷！",
+        "汪~？",
         "犬科动物什么时候才能站起来！"
     ];
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
     {
-        var message = FilterMessage(update);
-
-        if (message is null) return;
-
-        // if (update.Type == UpdateType.Message
-        //     && update.Message!.Type == MessageType.Text
-        //     && update.Message.Text!.StartsWith('/'))
-        // {
-        //     var command = update.Message.Text[1..].Split(" ");
-        //     logger.LogInformation("Telegram command: {Command}", update.Message.Text);
-        //     await OnCommand(update.Message, command[0], command[1..]);
-        //     return;
-        // }
-
-        var content = UpdateMessageHelper.CreateContentFromMessage(message, message.EditDate != null);
-        var sender = UpdateMessageHelper.CreatePlayerFromSender(message);
-
-        if (config.IsDebug()) logger.LogInformation("Telegram message: {Message}", message.ToString());
-
-        await messenger.Message.PublishAsync(new Core.Model.Message(config.GetName(), content, sender));
+        switch (update.Type)
+        {
+            case UpdateType.Message:
+                await OnMessage(update.Message, update.Type);
+                return;
+            case UpdateType.EditedMessage:
+                await OnMessage(update.EditedMessage, update.Type);
+                return;
+            case UpdateType.ChannelPost:
+                await OnMessage(update.ChannelPost, update.Type);
+                return;
+            case UpdateType.EditedChannelPost:
+                await OnMessage(update.EditedChannelPost, update.Type);
+                return;
+        }
     }
 
-    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source,
+    public Task HandleErrorAsync(ITelegramBotClient _, Exception exception, HandleErrorSource source,
         CancellationToken cancellationToken)
     {
         logger.LogWarning(exception, "Error!");
         return Task.CompletedTask;
     }
 
-    private Message? FilterMessage(Update update)
+    private async Task OnMessage(Message? message, UpdateType type)
     {
-        if (update.Message != null
-            && update.Message.Chat.Id == config.GetTelegramChatId()
-            && StartTime.CompareTo(update.Message?.Date) != 1)
-            return update.Message;
+        if (message == null)
+        {
+            return;
+        }
+        
+        if (message.Chat.Id != config.GetTelegramChatId())
+        {
+            return;
+        }
 
-        if (update.ChannelPost != null
-            && update.ChannelPost.Chat.Id == config.GetTelegramChatId()
-            && StartTime.CompareTo(update.ChannelPost?.Date) != 1)
-            return update.ChannelPost;
+        if (type == UpdateType.Message && message.Text is not null)
+        {
+            var args = message.Text.Split(' ');
+            if (args[0].StartsWith('/'))
+            {
+                await OnCommand(message, args[0], args);
+                return;
+            }
+        }
+        
+        var content = UpdateMessageHelper.CreateContentFromMessage(message, message.EditDate != null);
+        var sender = UpdateMessageHelper.CreatePlayerFromSender(message);
 
-        if (update.EditedMessage != null
-            && update.EditedMessage.Chat.Id == config.GetTelegramChatId()
-            && StartTime.CompareTo(update.EditedMessage?.EditDate) != 1)
-            return update.EditedMessage;
+        if (config.IsDebug() && logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Telegram message: {Message}", message.ToString());
+        }
 
-        if (update.EditedChannelPost != null
-            && update.EditedChannelPost.Chat.Id == config.GetTelegramChatId()
-            && StartTime.CompareTo(update.EditedChannelPost?.EditDate) != 1)
-            return update.EditedChannelPost;
+        await messenger.Message.PublishAsync(new Core.Model.Message(config.GetName(), content, sender));
+    }
 
-        return null;
+    private async Task OnCommand(Message message, string command, params string[] args)
+    {
+        if (command.StartsWith("/meow"))
+        {
+            await bot.SendMessage(message.Chat.Id, Meow[Random.Next(Meow.Length)],
+                replyParameters: new ReplyParameters
+                {
+                    MessageId = message.MessageId
+                });
+        }
     }
 
     // public async Task OnCommand(Message message, string command, params string[] args)
